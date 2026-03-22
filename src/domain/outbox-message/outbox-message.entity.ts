@@ -4,6 +4,7 @@ import {
   Column,
   CreateDateColumn,
 } from 'typeorm';
+import { OutBoxStatus } from './enums/outbox-message.enum';
 
 @Entity('outbox_message')
 export class OutboxMessage {
@@ -16,8 +17,8 @@ export class OutboxMessage {
   @Column({ type: 'jsonb' })
   payload: any;
 
-  @Column()
-  status: string;
+  @Column({ type: 'enum', enum: OutBoxStatus, default: OutBoxStatus.PENDING })
+  status: OutBoxStatus;
 
   @Column({ default: 0 })
   attempts: number;

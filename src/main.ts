@@ -4,6 +4,7 @@ import { ConfigService } from '@nestjs/config';
 import { ValidationPipe, VersioningType } from '@nestjs/common';
 import { json, urlencoded } from 'express';
 import { ValidationError } from 'class-validator';
+import { DtoValidation } from './infrastructure/http/exceptions/exceptions';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
@@ -17,14 +18,14 @@ async function bootstrap() {
       whitelist: true,
       transform: true,
       exceptionFactory: (errors: ValidationError[]) => {
-        // return new DtoValidation(errors);
+        return new DtoValidation(errors);
       },
     }),
   );
-  // app.setGlobalPrefix('api');
-  // app.enableVersioning({
-  //   type: VersioningType.URI,
-  // });
+  app.setGlobalPrefix('api');
+  app.enableVersioning({
+    type: VersioningType.URI,
+  });
 
   await app.listen(port);
 }
