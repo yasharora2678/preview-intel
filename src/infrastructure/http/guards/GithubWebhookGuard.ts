@@ -1,5 +1,5 @@
 import { CanActivate, ExecutionContext, Injectable } from '@nestjs/common';
-import crypto from 'crypto';
+import * as crypto from 'crypto';
 import { InValidSignatureException } from '../exceptions/exceptions';
 
 @Injectable()
@@ -9,6 +9,9 @@ export class GithubWebhookGuard implements CanActivate {
 
     const signature = request.headers['x-hub-signature-256'];
     const rawBody = request.body;
+    if (!Buffer.isBuffer(rawBody)) {
+      throw new Error('Raw body not available');
+    }
 
     const expectedSignature =
       'sha256=' +

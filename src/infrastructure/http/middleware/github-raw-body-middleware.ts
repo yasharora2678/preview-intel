@@ -7,7 +7,7 @@ export class GithubRawBodyMiddleware implements NestMiddleware {
   private rawParser = express.raw({ type: 'application/json' });
 
   use(req: Request, res: Response, next: NextFunction) {
+    console.log('Middleware clalled');
     this.rawParser(req, res, next);
-    return next();
   }
 }
