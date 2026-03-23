@@ -28,4 +28,13 @@ export class OutboxMessage {
 
   @CreateDateColumn({ type: 'timestamptz' })
   created_at: Date;
+
+  public markAsSent(): void {
+    if (this.status === OutBoxStatus.SENT) {
+      throw new Error('Message is already marked as sent.');
+    }
+
+    this.status = OutBoxStatus.SENT;
+    this.published_at = new Date();
+  }
 }

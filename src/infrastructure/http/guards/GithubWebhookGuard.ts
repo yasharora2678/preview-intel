@@ -8,10 +8,7 @@ export class GithubWebhookGuard implements CanActivate {
     const request = context.switchToHttp().getRequest();
 
     const signature = request.headers['x-hub-signature-256'];
-    const rawBody = request.body;
-    if (!Buffer.isBuffer(rawBody)) {
-      throw new Error('Raw body not available');
-    }
+    const rawBody = request.rawBody;
 
     const expectedSignature =
       'sha256=' +

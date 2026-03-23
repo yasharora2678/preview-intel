@@ -14,8 +14,6 @@ export class WebhooksController {
     @Body() payload: any,
     @Res() res: Response
   ) {
-    console.log("hi")
-    payload = JSON.parse(payload.toString());
     await this.handler.handle(event, payload);
     return res
       .status(HttpStatus.OK)
