@@ -8,6 +8,7 @@ import { BullModule } from '@nestjs/bullmq';
 import { ScheduleModule } from '@nestjs/schedule'
 import { OutboxPollerModule } from './infrastructure/outbox-poller/outbox-poller.module';
 import { QueueModule } from './features/queue/queue.module';
+import { GithubModule } from './infrastructure/github/github-module';
 
 @Module({
   imports: [
@@ -17,6 +18,7 @@ import { QueueModule } from './features/queue/queue.module';
     WebhooksModule,
     OutboxPollerModule,
     QueueModule,
+    GithubModule,
     BullModule.forRoot({
       connection: {
         host: 'ai-pr-reviewer-redis',
