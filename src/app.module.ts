@@ -9,6 +9,7 @@ import { ScheduleModule } from '@nestjs/schedule'
 import { OutboxPollerModule } from './infrastructure/outbox-poller/outbox-poller.module';
 import { QueueModule } from './features/queue/queue.module';
 import { GithubModule } from './infrastructure/github/github-module';
+import { RedisModule } from '@nestjs-modules/ioredis';
 
 @Module({
   imports: [
@@ -19,11 +20,16 @@ import { GithubModule } from './infrastructure/github/github-module';
     OutboxPollerModule,
     QueueModule,
     GithubModule,
+    // RedisModule,
     BullModule.forRoot({
       connection: {
         host: 'ai-pr-reviewer-redis',
         port: 6379,
       },
+    }),
+    RedisModule.forRoot({             
+      type: 'single',
+      url: 'redis://ai-pr-reviewer-redis:6379',
     }),
   ],
   controllers: [AppController],

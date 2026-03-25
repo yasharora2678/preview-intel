@@ -5,6 +5,7 @@ import { ConfigService } from '@nestjs/config';
 import { CommitStatus } from './status.enum';
 import { RedisService } from '../redis/redis.service';
 import { AiReview, PrFile } from './github-types';
+import * as fs from 'fs';
 
 @Injectable()
 export class GithubClientService {
@@ -15,44 +16,38 @@ export class GithubClientService {
     private readonly configService: ConfigService,
   ) {}
 
-  private getPrivateKey() {
-    return this.configService
-      .get<string>('GITHUB_PRIVATE_KEY')
-      .replace(/\\n/g, '\n');
+  private async buildOctokit(token: string): Promise<Octokit> {
+    return new Octokit({ auth: token });
+  }
+
+  private getPrivateKey(): string {
+    const keyPath = this.configService.get<string>('GITHUB_APP_PRIVATE_KEY');
+
+    return fs.readFileSync(keyPath, 'utf8');
   }
 
   async getInstallationOctokit(installationId: number): Promise<Octokit> {
     const cacheKey = `github_installation_token:${installationId}`;
-
     const cachedToken = await this.redisService.get(cacheKey);
 
     if (cachedToken) {
       this.logger.log(`Using cached GitHub token for ${installationId}`);
-
-      return new Octokit({
-        auth: cachedToken,
-      });
+      return this.buildOctokit(cachedToken);
     }
 
     this.logger.log(`Generating new GitHub token for ${installationId}`);
 
     const auth = createAppAuth({
-      appId: process.env.GITHUB_APP_ID,
+      appId: this.configService.get<string>('GITHUB_APP_ID'),
       privateKey: this.getPrivateKey(),
       installationId,
     });
 
-    const installationAuth = await auth({
-      type: 'installation',
-    });
-
+    const installationAuth = await auth({ type: 'installation' });
     const token = installationAuth.token;
 
     await this.redisService.set(cacheKey, token, 55 * 60);
-
-    return new Octokit({
-      auth: token,
-    });
+    return this.buildOctokit(token);
   }
 
   async fetchPrFiles(
@@ -61,24 +56,18 @@ export class GithubClientService {
     repo: string,
     prNumber: number,
   ): Promise<PrFile[]> {
-    const files: PrFile[] = [];
-
-    const response = await octokit.paginate(octokit.pulls.listFiles, {
+    const response = await octokit.paginate(octokit.rest.pulls.listFiles, {
       owner,
       repo,
       pull_number: prNumber,
       per_page: 100,
     });
 
-    for (const file of response) {
-      files.push({
-        filename: file.filename,
-        patch: file.patch,
-        status: file.status,
-      });
-    }
-
-    return files;
+    return response.map((file) => ({
+      filename: file.filename,
+      patch: file.patch,
+      status: file.status,
+    }));
   }
 
   filterFiles(files: PrFile[]): PrFile[] {
@@ -97,19 +86,9 @@ export class GithubClientService {
 
     return files.filter((file) => {
       if (!file.patch) return false;
-
       const name = file.filename.toLowerCase();
-
-      for (const pattern of ignoredPatterns) {
-        if (name.includes(pattern)) {
-          return false;
-        }
-      }
-
-      if (file.patch.length > 20000) {
-        return false;
-      }
-
+      if (ignoredPatterns.some((p) => name.includes(p))) return false;
+      if (file.patch.length > 20000) return false;
       return true;
     });
   }
@@ -121,7 +100,7 @@ export class GithubClientService {
     prNumber: number,
     review: AiReview,
   ) {
-    await octokit.pulls.createReview({
+    await octokit.rest.pulls.createReview({
       owner,
       repo,
       pull_number: prNumber,
@@ -145,7 +124,7 @@ export class GithubClientService {
     state: CommitStatus,
     description: string,
   ) {
-    await octokit.repos.createCommitStatus({
+    await octokit.rest.repos.createCommitStatus({
       owner,
       repo,
       sha,

@@ -9,16 +9,16 @@ async function run() {
 
   const githubClient = app.get(GithubClientService)
 
-  const octokit = await githubClient.getInstallationOctokit(123456)
+  const octokit = await githubClient.getInstallationOctokit(117705228)
 
   const files = await githubClient.fetchPrFiles(
       octokit,
-      "owner",
-      "repo",
+      "yasharora2678",
+      "preview-intel",
       1
   )
-
-  console.log(files)
+  const filteredFiles = githubClient.filterFiles(files)
+  console.log(filteredFiles)
 
   await app.close()
 }

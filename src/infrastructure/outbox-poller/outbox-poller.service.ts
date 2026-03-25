@@ -35,8 +35,7 @@ export class OutboxPollerService {
 
   async publishEvent(outboxMessage: OutboxMessage) {
         const { payload } = outboxMessage;
-        const jobId = `${payload.repository.id}-${payload.number}-${payload.pull_request.head.sha}`;
-        console.log(jobId)
+        const jobId = `${payload.owner}-${payload.repo}-${payload.prNumber}`;
 
         await this.prQueue.add('review-pr', payload, {
           jobId,
