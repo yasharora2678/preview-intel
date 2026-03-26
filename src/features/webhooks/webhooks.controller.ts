@@ -8,7 +8,7 @@ import {
   Res,
   UseGuards,
 } from '@nestjs/common';
-import { GithubWebhookGuard } from 'webhook-reciever/src/features/webhooks/guards/github-webhook.guard';
+import { GithubWebhookGuard } from 'src/features/webhooks/guards/github-webhook.guard';
 import { WebHooksHandler } from './webhooks.service';
 import { Response } from 'express';
 

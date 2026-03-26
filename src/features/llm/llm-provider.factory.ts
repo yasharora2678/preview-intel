@@ -2,7 +2,7 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { DataSource } from 'typeorm';
-import { Installation } from 'webhook-reciever/src/domain/installation.entity';
+import { Installation } from 'src/domain/installation.entity';
 import { OpenAIProvider } from './providers/openai.provider';
 import { AnthropicProvider } from './providers/anthropic.provider';
 import * as crypto from 'crypto';

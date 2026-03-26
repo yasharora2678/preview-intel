@@ -5,7 +5,7 @@ import {
   CreateDateColumn,
 } from 'typeorm';
 import { OutBoxStatus } from './enums/outbox-message.enum';
-import { PrReviewJobData } from 'webhook-reciever/src/shared/pre-review-job-data';
+import { PrReviewJobData } from 'src/shared/pre-review-job-data';
 
 @Entity('outbox_message')
 export class OutboxMessage {

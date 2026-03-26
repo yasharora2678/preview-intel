@@ -5,10 +5,10 @@ import { Queue } from 'bullmq';
 import { InjectRepository } from '@nestjs/typeorm';
 import { OutboxMessageRepository } from '../repositories/outbox-message.repository';
 import { ConfigService } from '@nestjs/config';
-import { OutboxMessage } from 'webhook-reciever/src/domain/outbox-message/outbox-message.entity';
+import { OutboxMessage } from 'src/domain/outbox-message/outbox-message.entity';
 import * as crypto from 'crypto';
-import { JobPriority } from 'webhook-reciever/src/shared/pre-review-job-data';
-import { OutBoxStatus } from 'webhook-reciever/src/domain/outbox-message/enums/outbox-message.enum';
+import { JobPriority } from 'src/shared/pre-review-job-data';
+import { OutBoxStatus } from 'src/domain/outbox-message/enums/outbox-message.enum';
 import { LessThanOrEqual } from 'typeorm';
 
 @Injectable()

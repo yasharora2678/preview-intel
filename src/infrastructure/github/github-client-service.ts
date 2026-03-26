@@ -1,8 +1,7 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { Octokit } from '@octokit/rest';
-import { ConfigService } from '@nestjs/config';
 import { App } from '@octokit/app';
-import { DiffInput } from 'webhook-reciever/src/features/llm/review-provider.interface';
+import { DiffInput } from 'src/features/llm/review-provider.interface';
 
 const SKIP_PATTERNS = [
   /package-lock\.json$/,
