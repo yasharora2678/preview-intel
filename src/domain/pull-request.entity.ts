@@ -6,6 +6,7 @@ import {
   OneToMany,
   CreateDateColumn,
   JoinColumn,
+  UpdateDateColumn,
 } from 'typeorm';
 import { Repository } from './repository.entity';
 
@@ -36,6 +37,9 @@ export class PullRequest {
   @Column()
   base_branch: string;
 
+  @Column()
+  head_branch: string;
+
   @Column({ type: 'text' })
   github_pr_url: string;
 
@@ -44,4 +48,7 @@ export class PullRequest {
 
   @CreateDateColumn({ type: 'timestamptz' })
   created_at: Date;
+
+  @UpdateDateColumn({ type: 'timestamptz' })
+  updated_at: Date;
 }

@@ -1,6 +1,6 @@
 import { GithubClientService } from "./github-client-service"
 import { NestFactory } from "@nestjs/core"
-import { AppModule } from "src/app.module"
+import { AppModule } from "webhook-reciever/src/app.module"
 
 
 async function run() {

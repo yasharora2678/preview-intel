@@ -39,11 +39,14 @@ export class Repository {
   @Column({ default: true })
   skip_bots: boolean;
 
+  @Column('text', { array: true, default: '{}', name: 'skip_file_patterns' })
+  skip_file_patterns: string[];
+
   @Column({ default: 50 })
-  score_fail_threshold: number;
+  score_failure_threshold: number;
 
   @Column({ default: 80 })
-  score_pass_threshold: number;
+  score_success_threshold: number;
 
   @CreateDateColumn({ type: 'timestamptz' })
   created_at: Date;

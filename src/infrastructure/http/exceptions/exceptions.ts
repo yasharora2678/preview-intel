@@ -38,6 +38,12 @@ export class DtoValidation extends BadRequestException {
 
 export class InValidSignatureException extends Error {
   constructor() {
-    super('Invalid Request Body for signature verification');
+    super('Missing webhook signature or invalid');
+  }
+}
+
+export class InValidRawBodyException extends Error {
+  constructor() {
+    super('Missing raw body or invalid');
   }
 }

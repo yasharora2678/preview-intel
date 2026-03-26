@@ -26,6 +26,12 @@ export class OutboxMessageRepository extends Repository<OutboxMessage> {
 //     };
 //   };
 
+  async findByDeliveryId(deliveryId: string) {
+    return await this.findOne({
+      where: {delivery_id: deliveryId}
+    })
+  }
+
   async storeOutboxMessage(outbox_message: any) {
     return await this.save(outbox_message);
   }
@@ -40,6 +46,7 @@ export class OutboxMessageRepository extends Repository<OutboxMessage> {
   async getUnsentMessages(limit: number) {
     const [rows] = await this.findAndCount({
       where: { status: OutBoxStatus.PENDING },
+      order: { created_at: 'ASC' },
       take: limit,
     });
     return rows;

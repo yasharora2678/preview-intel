@@ -26,9 +26,11 @@ export class CreatePullRequests1774006916242 implements MigrationInterface {
           { name: 'author_login', type: 'varchar' },
           { name: 'head_commit_sha', type: 'varchar' },
           { name: 'base_branch', type: 'varchar' },
+          { name: 'head_branch', type: 'varchar' },
           { name: 'github_pr_url', type: 'text' },
           { name: 'state', type: 'varchar' },
           { name: 'created_at', type: 'timestamptz', default: 'now()' },
+          { name: 'updated_at', type: 'timestamptz', default: 'now()' },
         ],
       }),
     );

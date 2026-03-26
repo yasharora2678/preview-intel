@@ -31,6 +31,8 @@ export class CreateReviews1774006970457 implements MigrationInterface {
           { name: 'breaking_change', type: 'boolean', default: false },
           { name: 'github_review_id', type: 'bigint', isNullable: true },
           { name: 'completed_at', type: 'timestamptz', isNullable: true },
+          { name: 'processing_started_at', type: 'timestamptz', isNullable: true },
+          { name: 'processing_completed_at', type: 'timestamptz', isNullable: true },
           { name: 'created_at', type: 'timestamptz', default: 'now()' },
         ],
       }),

@@ -4,7 +4,7 @@ import {
   ProblemDocumentExtension,
 } from 'http-problem-details';
 import { ErrorMapper } from 'http-problem-details-mapper';
-import { DtoValidation, InValidSignatureException } from './exceptions';
+import { DtoValidation, InValidRawBodyException, InValidSignatureException } from './exceptions';
 
 class BadRequestMapper {
   static mapError(
@@ -71,9 +71,22 @@ export class ValidationPipeExceptionMapper extends ErrorMapper {
   }
 }
 
-export class UnAuthorizedExceptionMapper extends ErrorMapper {
+export class InValidSignatureExceptionMapper extends ErrorMapper {
   constructor() {
     super(InValidSignatureException);
+  }
+
+  mapError(error: Error): ProblemDocument {
+    const extension = new ProblemDocumentExtension({
+      type_constant: 'IS_UNAUTHORIZED',
+    });
+    return ForbiddenMapper.mapError(error, extension);
+  }
+}
+
+export class InValidRawBodyExceptionMapper extends ErrorMapper {
+  constructor() {
+    super(InValidRawBodyException);
   }
 
   mapError(error: Error): ProblemDocument {
