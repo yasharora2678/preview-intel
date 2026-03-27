@@ -39,7 +39,7 @@ export class Repository {
   @Column({ default: true })
   skip_bots: boolean;
 
-  @Column('text', { array: true, default: '{}', name: 'skip_file_patterns' })
+  @Column('text', { array: true, default: () => "'{}'" })
   skip_file_patterns: string[];
 
   @Column({ default: 50 })

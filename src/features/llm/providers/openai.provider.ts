@@ -38,15 +38,18 @@ You MUST respond with ONLY a valid JSON object matching this exact schema — no
 export class OpenAIProvider implements ReviewProvider {
   private readonly logger = new Logger(OpenAIProvider.name);
   private readonly client: OpenAI;
+  private readonly MODEL = 'gpt-4o';
 
-  constructor(private readonly config: ConfigService) {
-    this.client = new OpenAI({
-      apiKey: this.config.get('OPENAI_API_KEY'),
-    });
+  constructor(apiKey: string) {
+    this.client = new OpenAI({ apiKey });
   }
 
   getName(): string {
     return 'openai';
+  }
+
+  getModel(): string {
+    return this.MODEL;
   }
 
   estimateTokens(text: string): number {

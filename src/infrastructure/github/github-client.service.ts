@@ -1,7 +1,7 @@
-import { Injectable, Logger } from '@nestjs/common';
+import { Inject, Injectable, Logger } from '@nestjs/common';
 import { Octokit } from '@octokit/rest';
-import { App } from '@octokit/app';
 import { DiffInput } from 'src/features/llm/review-provider.interface';
+import { OCTOKIT_APP } from './github-app.module';
 
 const SKIP_PATTERNS = [
   /package-lock\.json$/,
@@ -22,7 +22,7 @@ export class GithubClientService {
   private readonly logger = new Logger(GithubClientService.name);
 
   constructor(
-    private readonly githubApp: App,
+    @Inject(OCTOKIT_APP) private readonly githubApp,
   ) {}
 
   private async getInstallationOctokit(

@@ -1,8 +1,8 @@
 {
   "compilerOptions": {
-    "module": "nodenext",
+    // "module": "nodenext",
     "moduleResolution": "nodenext",
-    // "module": "commonjs",
+    "module": "nodenext",
     "declaration": true,
     "removeComments": true,
     "emitDecoratorMetadata": true,

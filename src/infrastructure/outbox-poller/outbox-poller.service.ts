@@ -26,6 +26,7 @@ export class OutboxPollerService implements OnModuleDestroy {
 
   @Cron('*/60 * * * * *')
   async pollOutbox() {
+    console.log("running outbox poller")
     if (this.isPolling) return; // prevent overlapping polls
     this.isPolling = true;
 

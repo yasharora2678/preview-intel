@@ -4,7 +4,7 @@ export class CreateOutboxMessage1774007203991 implements MigrationInterface {
   name = 'CreateOutboxMessage1774007203991';
   public async up(queryRunner: QueryRunner): Promise<void> {
     await queryRunner.query(`
-      CREATE TYPE "public"."outbox_message_status_enum" AS ENUM('SENT', 'PENDING');
+      CREATE TYPE "public"."outbox_message_status_enum" AS ENUM('published', 'pending', 'failed');
     `);
 
     await queryRunner.createTable(
@@ -23,6 +23,12 @@ export class CreateOutboxMessage1774007203991 implements MigrationInterface {
             isNullable: false,
           },
           {
+            name: 'delivery_id',
+            type: 'varchar',
+            isUnique: true,
+            isNullable: false,
+          },
+          {
             name: 'payload',
             type: 'jsonb',
             isNullable: false,
@@ -30,7 +36,7 @@ export class CreateOutboxMessage1774007203991 implements MigrationInterface {
           {
             name: 'status',
             type: '"public"."outbox_message_status_enum"',
-            default: `'PENDING'`,
+            default: `'pending'`,
             isNullable: false,
           },
           {

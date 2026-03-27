@@ -1,22 +1,23 @@
-import { Injectable, Logger } from '@nestjs/common';
+import { Inject, Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import { App } from '@octokit/app';
 import { Octokit } from '@octokit/rest';
 import { ReviewResult } from 'src/features/llm/review-provider.interface';
 import { PrReviewJobData } from 'src/shared/pre-review-job-data';
-
+import { OCTOKIT_APP } from './github-app.module';
 
 @Injectable()
 export class GithubCommentService {
   private readonly logger = new Logger(GithubCommentService.name);
 
   constructor(
-    private readonly githubApp: App,
+    @Inject(OCTOKIT_APP) private readonly githubApp,
     private readonly config: ConfigService,
   ) {}
 
   private async getOctokit(installationId: number): Promise<Octokit> {
-    return this.githubApp.getInstallationOctokit(installationId) as unknown as Octokit;
+    return this.githubApp.getInstallationOctokit(
+      installationId,
+    ) as unknown as Octokit;
   }
 
   /**
@@ -55,7 +56,11 @@ export class GithubCommentService {
       });
 
       this.logger.log(
-        { prNumber: data.prNumber, score: result.score, issues: result.issues.length },
+        {
+          prNumber: data.prNumber,
+          score: result.score,
+          issues: result.issues.length,
+        },
         '✅ Posted GitHub PR review',
       );
 
@@ -105,18 +110,26 @@ export class GithubCommentService {
         state,
         description: descriptions[state],
         context: 'PR Intelligence Review',
-        target_url: `${this.config.get('DASHBOARD_URL')}/reviews`, // link to dashboard
+        // target_url: `${this.config.get('DASHBOARD_URL')}/reviews`, // link to dashboard
       });
     } catch (err: any) {
       // Status check failures are non-critical — log and continue
-      this.logger.warn({ err: err.message }, 'Failed to post commit status check');
+      this.logger.warn(
+        { err: err.message },
+        'Failed to post commit status check',
+      );
     }
   }
 
   private buildReviewBody(result: ReviewResult): string {
-    const scoreEmoji = result.score >= 70 ? '✅' : result.score >= 50 ? '⚠️' : '❌';
-    const criticalCount = result.issues.filter((i) => i.severity === 'critical').length;
-    const warningCount = result.issues.filter((i) => i.severity === 'warning').length;
+    const scoreEmoji =
+      result.score >= 70 ? '✅' : result.score >= 50 ? '⚠️' : '❌';
+    const criticalCount = result.issues.filter(
+      (i) => i.severity === 'critical',
+    ).length;
+    const warningCount = result.issues.filter(
+      (i) => i.severity === 'warning',
+    ).length;
 
     const lines = [
       `## 🤖 AI PR Review — Score: ${result.score}/100 ${scoreEmoji}`,
@@ -130,7 +143,9 @@ export class GithubCommentService {
       lines.push(`### Issues Found (${result.issues.length} total)`);
       lines.push(`- 🔴 Critical: ${criticalCount}`);
       lines.push(`- 🟡 Warnings: ${warningCount}`);
-      lines.push(`- 💡 Suggestions: ${result.issues.length - criticalCount - warningCount}`);
+      lines.push(
+        `- 💡 Suggestions: ${result.issues.length - criticalCount - warningCount}`,
+      );
       lines.push('');
     }
 
@@ -142,7 +157,8 @@ export class GithubCommentService {
 
     const flags = [];
     if (result.missing_tests) flags.push('⚠️ Missing tests detected');
-    if (result.breaking_change) flags.push('🚨 Potential breaking change detected');
+    if (result.breaking_change)
+      flags.push('🚨 Potential breaking change detected');
     if (flags.length > 0) {
       lines.push('### Flags');
       flags.forEach((f) => lines.push(f));
@@ -152,11 +168,12 @@ export class GithubCommentService {
   }
 
   private buildIssueComment(issue: any): string {
-    const severityEmoji = {
-      critical: '🔴',
-      warning: '🟡',
-      suggestion: '💡',
-    }[issue.severity] || '💡';
+    const severityEmoji =
+      {
+        critical: '🔴',
+        warning: '🟡',
+        suggestion: '💡',
+      }[issue.severity] || '💡';
 
     return [
       `${severityEmoji} **[${issue.severity.toUpperCase()}] ${issue.type}**`,

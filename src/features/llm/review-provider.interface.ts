@@ -34,5 +34,6 @@ export interface DiffInput {
 export interface ReviewProvider {
   review(diff: DiffInput): Promise<ReviewResult>;
   getName(): string;
+  getModel(): string; 
   estimateTokens(text: string): number;
 }

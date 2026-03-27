@@ -1,7 +1,9 @@
 import { OutboxMessageRepository } from '../../infrastructure/repositories/outbox-message.repository';
-import { Injectable, Logger } from '@nestjs/common';
+import { Inject, Injectable, Logger } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Transactional } from 'typeorm-transactional';
+import { CreateInstallationHandler } from '../installations/create-installation.service';
+import { CreateRepositoryHandler } from '../repositories/create-repository.service';
 
 const PROCESSABLE_ACTIONS = new Set(['opened', 'synchronize', 'reopened']);
 
@@ -12,6 +14,10 @@ export class WebHooksHandler {
   constructor(
     @InjectRepository(OutboxMessageRepository)
     private readonly outboxMessageRepository: OutboxMessageRepository,
+    @Inject(CreateInstallationHandler)
+    private readonly createInstallationHandler: CreateInstallationHandler,
+    @Inject(CreateRepositoryHandler)
+    private readonly createRepositoryHandler: CreateRepositoryHandler
   ) {}
 
   @Transactional()
@@ -43,6 +49,10 @@ export class WebHooksHandler {
       return;
     }
 
+    await this.createInstallationHandler.handle(payload);
+
+    await this.createRepositoryHandler.handle(payload);
+    
     const pr = payload.pull_request;
 
     const messagePayload = {

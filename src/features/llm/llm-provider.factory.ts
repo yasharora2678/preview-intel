@@ -1,12 +1,10 @@
-// apps/worker/src/llm/llm-provider.factory.ts
 import { Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import { DataSource } from 'typeorm';
-import { Installation } from 'src/domain/installation.entity';
 import { OpenAIProvider } from './providers/openai.provider';
 import { AnthropicProvider } from './providers/anthropic.provider';
 import * as crypto from 'crypto';
 import { ReviewProvider } from './review-provider.interface';
+import { InstallationRepository } from 'src/infrastructure/repositories/installation.repository';
 
 @Injectable()
 export class LlmProviderFactory {
@@ -14,7 +12,7 @@ export class LlmProviderFactory {
 
   constructor(
     private readonly config: ConfigService,
-    private readonly dataSource: DataSource,
+    private readonly installationRepository: InstallationRepository
   ) {}
 
   /**
@@ -23,8 +21,7 @@ export class LlmProviderFactory {
    * Falls back to global env var keys if no per-installation key is set.
    */
   async getForInstallation(githubInstallationId: number): Promise<ReviewProvider> {
-    const installation = await this.dataSource
-      .getRepository(Installation)
+    const installation = await this.installationRepository
       .findOne({ where: {github_installation_id: githubInstallationId } });
 
     const provider = installation?.llm_provider || 'openai';
@@ -45,7 +42,7 @@ export class LlmProviderFactory {
         return new AnthropicProvider(apiKey);
       case 'openai':
       default:
-        return new OpenAIProvider(apiKey, this.config);
+        return new OpenAIProvider(apiKey);
     }
   }
 
