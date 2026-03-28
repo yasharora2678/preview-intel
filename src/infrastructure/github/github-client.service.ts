@@ -63,8 +63,8 @@ export class GithubClientService {
     const octokit = await this.getInstallationOctokit(installationId);
 
     const [prData, filesData] = await Promise.all([
-      octokit.pulls.get({ owner, repo, pull_number: prNumber }),
-      octokit.pulls.listFiles({
+      octokit.rest.pulls.get({ owner, repo, pull_number: prNumber }),
+      octokit.rest.pulls.listFiles({
         owner,
         repo,
         pull_number: prNumber,

@@ -22,9 +22,10 @@ export class CreateInstallationHandler {
     if (!existing) {
       await this.installationRepository.save({
         github_installation_id: githubInstallationId,
-        github_account_login: payload.installation.account?.login,
-        github_account_type: payload.installation.account?.type || 'User',
-        llm_provider: 'openai',
+        github_account_login: payload.repository.owner.login,
+        // user_id: payload.repository.owner.id,
+        github_account_type: payload.repository.owner.type,
+        llm_provider: 'groq',
         isActive: true,
       });
 

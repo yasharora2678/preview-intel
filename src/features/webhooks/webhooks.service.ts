@@ -51,13 +51,13 @@ export class WebHooksHandler {
 
     await this.createInstallationHandler.handle(payload);
 
-    await this.createRepositoryHandler.handle(payload);
+    const repository = await this.createRepositoryHandler.handle(payload);
     
     const pr = payload.pull_request;
 
     const messagePayload = {
       installationId: payload.installation?.id,
-      repositoryId: '',
+      repositoryId: repository.id,
       githubRepoId: payload.repository?.id,
       repoFullName: payload.repository?.full_name,
       prNumber: pr?.number,
@@ -67,6 +67,7 @@ export class WebHooksHandler {
       headBranch: pr?.head?.ref,
       authorLogin: pr?.user?.login,
       action: payload.action,
+      githubPrUrl: pr?.html_url
     };
 
     await this.outboxMessageRepository.storeOutboxMessage({

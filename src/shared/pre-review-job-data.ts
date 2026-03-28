@@ -9,6 +9,7 @@ export interface PrReviewJobData {
   baseBranch: string;
   headBranch: string;
   authorLogin: string;
+  githubPrUrl: string;
   action: 'opened' | 'synchronize' | 'reopened';
 }
 

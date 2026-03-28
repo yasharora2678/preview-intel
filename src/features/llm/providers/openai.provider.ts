@@ -1,7 +1,5 @@
-// apps/worker/src/llm/providers/openai.provider.ts
 import { Injectable, Logger } from '@nestjs/common';
 import OpenAI from 'openai';
-import { ConfigService } from '@nestjs/config';
 import {
   DiffInput,
   ReviewProvider,

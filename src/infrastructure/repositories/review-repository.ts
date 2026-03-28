@@ -53,6 +53,7 @@ export class ReviewsRepository extends Repository<Review> {
         base_branch: data.baseBranch,
         head_branch: data.headBranch,
         state: 'open',
+        github_pr_url: data.githubPrUrl
       });
     } else {
       // Update with latest commit SHA on re-push
@@ -103,7 +104,7 @@ export class ReviewsRepository extends Repository<Review> {
     if (result.issues.length > 0) {
       const issues = result.issues.map((issue) =>
         this.reviewIssueRepository.create({
-          id: reviewId,
+          review_id: reviewId,
           type: issue.type,
           severity: issue.severity,
           file_path: issue.file,

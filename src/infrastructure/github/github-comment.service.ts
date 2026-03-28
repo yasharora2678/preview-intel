@@ -45,7 +45,7 @@ export class GithubCommentService {
       }));
 
     try {
-      const response = await octokit.pulls.createReview({
+      const response = await octokit.rest.pulls.createReview({
         owner,
         repo,
         pull_number: data.prNumber,
@@ -72,7 +72,7 @@ export class GithubCommentService {
         { err: err.message },
         'Failed to post with inline comments, retrying without them',
       );
-      const fallback = await octokit.pulls.createReview({
+      const fallback = await octokit.rest.pulls.createReview({
         owner,
         repo,
         pull_number: data.prNumber,
@@ -103,7 +103,7 @@ export class GithubCommentService {
     };
 
     try {
-      await octokit.repos.createCommitStatus({
+      await octokit.rest.repos.createCommitStatus({
         owner,
         repo,
         sha: data.headCommitSha,

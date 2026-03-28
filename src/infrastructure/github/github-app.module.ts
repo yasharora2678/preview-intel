@@ -10,7 +10,17 @@ export const OCTOKIT_APP = 'OCTOKIT_APP';
     {
       provide: OCTOKIT_APP,
       useFactory: async (config: ConfigService) => {
+
         const { App } = await import('@octokit/app');
+
+        // core octokit
+        const { Octokit } = await import('@octokit/core');
+
+        // REST API plugin
+        const { restEndpointMethods } = await import('@octokit/plugin-rest-endpoint-methods');
+
+        // extend Octokit with REST endpoints
+        const MyOctokit = Octokit.plugin(restEndpointMethods);
 
         const privateKeyPath = config.get<string>('GITHUB_APP_PRIVATE_KEY');
 
@@ -18,6 +28,9 @@ export const OCTOKIT_APP = 'OCTOKIT_APP';
           appId: config.get('GITHUB_APP_ID')!,
           privateKey: readFileSync(privateKeyPath!, 'utf8'),
           webhooks: { secret: config.get('GITHUB_WEBHOOK_SECRET')! },
+
+          // ⭐ this enables pulls / repos / issues APIs
+          Octokit: MyOctokit,
         });
       },
       inject: [ConfigService],

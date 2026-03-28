@@ -27,7 +27,7 @@ export class CreateRepositoryHandler {
         full_name: payload.repository.full_name,
         default_branch: payload.repository.default_branch,
       });
-      return;
+      return existingRepositry;
     }
 
     const installation = await this.installationRepository.findOne({
@@ -35,7 +35,7 @@ export class CreateRepositoryHandler {
     });
     if (!installation) return;
 
-    await this.githubRepository.save({
+    const savedRepository = await this.githubRepository.save({
       installation_id: installation.id,
       github_repo_id: githubRepoId,
       full_name: payload.repository.full_name,
@@ -49,5 +49,7 @@ export class CreateRepositoryHandler {
       { githubRepoId, fullName: payload.repository.full_name },
       'Created repository record',
     );
+
+    return savedRepository;
   }
 }
