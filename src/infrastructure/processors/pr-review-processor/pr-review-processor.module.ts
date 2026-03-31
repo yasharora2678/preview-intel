@@ -1,18 +1,19 @@
 
 import { Module } from '@nestjs/common';
-import { GithubModule } from 'src/infrastructure/github/github-module';
 import { PrReviewProcessor } from './pr-review-processor';
-import { ReviewsRepository } from 'src/infrastructure/repositories/review-repository';
 import { LlmModule } from 'src/features/llm/llm.module';
+import { ReviewModule } from 'src/features/reviews/reviews.module';
+import { GithubModule } from 'src/infrastructure/github/github-module';
 
 @Module({
   imports: [
     GithubModule,
     LlmModule,
+    ReviewModule
   ],
   providers: [
     PrReviewProcessor,
-    ReviewsRepository,
+    // ReviewsService,
   ],
 })
 export class ProcessorModule {}

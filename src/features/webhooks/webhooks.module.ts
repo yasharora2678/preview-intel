@@ -4,7 +4,7 @@ import { WebHooksHandler } from './webhooks.service';
 import { OutboxMessageRepository } from 'src/infrastructure/repositories/outbox-message.repository';
 import { GithubWebhookGuard } from './guards/github-webhook.guard';
 import { CreateInstallationModule } from '../installations/create-installation.module';
-import { CreateRepositoryModule } from '../repositories/create-repository.module';
+import { CreateRepositoryModule } from '../repositories/create-repository/create-repository.module';
 
 @Module({
   imports: [CreateInstallationModule, CreateRepositoryModule],

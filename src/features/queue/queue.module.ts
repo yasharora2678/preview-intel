@@ -8,11 +8,15 @@ import { ReviewsRepository } from 'src/infrastructure/repositories/review-reposi
 import { GithubRepository } from 'src/infrastructure/repositories/repositories.repository';
 import { PullRequestRepository } from 'src/infrastructure/repositories/pull-request.repository';
 import { ReviewIssueRepository } from 'src/infrastructure/repositories/review-issue.repository';
+import { ReviewsService } from '../reviews/reviews.service';
+import { QueryBus } from '@nestjs/cqrs';
+import { ReviewModule } from '../reviews/reviews.module';
 
 @Module({
   imports: [
     GithubModule,
     LlmModule,
+    ReviewModule,
     BullModule.forRootAsync({
       imports: [ConfigModule],
       useFactory: (config: ConfigService) => ({
@@ -38,10 +42,12 @@ import { ReviewIssueRepository } from 'src/infrastructure/repositories/review-is
   ],
   providers: [
     PrReviewProcessor,
-    ReviewsRepository,
-    GithubRepository,
-    PullRequestRepository,
-    ReviewIssueRepository,
+    // ReviewsService,
+    // ReviewsRepository,
+    // QueryBus,
+    // GithubRepository,
+    // PullRequestRepository,
+    // ReviewIssueRepository,
   ],
   exports: [BullModule],
 })

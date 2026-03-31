@@ -1,14 +1,13 @@
 import { Processor, OnWorkerEvent } from '@nestjs/bullmq';
 import { WorkerHost } from '@nestjs/bullmq';
 import { Logger } from '@nestjs/common';
-import axios from 'axios';
 import { Job } from 'bullmq';
 import { CircuitBreakerService } from 'src/features/llm/circuit-breaker.service';
 import { LlmProviderFactory } from 'src/features/llm/llm-provider.factory';
 import { ReviewResult } from 'src/features/llm/review-provider.interface';
+import { ReviewsService } from 'src/features/reviews/reviews.service';
 import { GithubClientService } from 'src/infrastructure/github/github-client.service';
 import { GithubCommentService } from 'src/infrastructure/github/github-comment.service';
-import { ReviewsRepository } from 'src/infrastructure/repositories/review-repository';
 import { PrReviewJobData } from 'src/shared/pre-review-job-data';
 import { Transactional } from 'typeorm-transactional';
 
@@ -21,7 +20,7 @@ export class PrReviewProcessor extends WorkerHost {
   constructor(
     private readonly gitHubClientService: GithubClientService,
     private readonly circuitBreaker: CircuitBreakerService,
-    private readonly reviewsRepository: ReviewsRepository,
+    private readonly reviewService: ReviewsService,
     private readonly commentService: GithubCommentService,
     private readonly providerFactory: LlmProviderFactory,
   ) {
@@ -37,7 +36,7 @@ export class PrReviewProcessor extends WorkerHost {
     );
 
     // 1. Create review record with 'processing' status
-    const review = await this.reviewsRepository.createPending(data);
+    const review = await this.reviewService.createPending(data);
 
     // 2. Post 'pending' status check on GitHub
     await this.commentService.postStatusCheck(data, 'pending');
@@ -54,7 +53,7 @@ export class PrReviewProcessor extends WorkerHost {
 
       if (diffChunks[0].files.length === 0) {
         this.logger.warn({ pr: data.prNumber }, 'No reviewable files in PR');
-        await this.reviewsRepository.markNoContent(review.id);
+        await this.reviewService.markNoContent(review.id);
         return;
       }
 
@@ -71,7 +70,7 @@ export class PrReviewProcessor extends WorkerHost {
       const mergedResult = this.mergeResults(results);
 
       // 6. Save review and issues to DB
-      await this.reviewsRepository.saveCompleted(
+      await this.reviewService.saveCompleted(
         review.id,
         mergedResult,
         provider.getName(),
@@ -89,7 +88,7 @@ export class PrReviewProcessor extends WorkerHost {
       );
 
       if (githubReviewId) {
-        await this.reviewsRepository.updateGithubReviewId(
+        await this.reviewService.updateGithubReviewId(
           review.id,
           githubReviewId,
         );
@@ -113,7 +112,7 @@ export class PrReviewProcessor extends WorkerHost {
         '✅ PR review completed',
       );
     } catch (err) {
-        await this.reviewsRepository.markFailed(
+        await this.reviewService.markFailed(
           review.id,
           (err as Error).message,
         );

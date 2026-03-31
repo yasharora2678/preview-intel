@@ -1,0 +1,151 @@
+// apps/api/src/auth/auth.service.ts
+import {
+  Injectable, Logger, UnauthorizedException,
+} from '@nestjs/common';
+import { JwtService } from '@nestjs/jwt';
+import { ConfigService } from '@nestjs/config';
+import { InjectRepository } from '@nestjs/typeorm';
+import { Repository } from 'typeorm';
+import * as crypto from 'crypto';
+import { v4 as uuidv4 } from 'uuid';
+import { JwtPayload } from './strategies/jwt.strategy';
+import { User } from 'src/domain/user.entity';
+import { RefreshToken } from 'src/domain/refresh-token.entity';
+
+interface FindOrCreateUserDto {
+  githubId: number;
+  githubUsername: string;
+  githubAvatarUrl?: string;
+//   githubAccessToken: string;
+}
+
+export interface TokenPair {
+  accessToken: string;
+  refreshToken: string;
+  expiresIn: number;
+}
+
+@Injectable()
+export class AuthService {
+  private readonly logger = new Logger(AuthService.name);
+
+  constructor(
+    @InjectRepository(User)
+    private readonly userRepo: Repository<User>,
+    @InjectRepository(RefreshToken)
+    private readonly refreshTokenRepo: Repository<RefreshToken>,
+    private readonly jwtService: JwtService,
+    private readonly configService: ConfigService,
+  ) {}
+
+  async findOrCreateUser(dto: FindOrCreateUserDto): Promise<User> {
+    let user = await this.userRepo.findOne({
+      where: { github_id: dto.githubId },
+    });
+
+    if (!user) {
+      this.logger.log(`Creating new user: ${dto.githubUsername}`);
+      user = this.userRepo.create({
+        github_id: dto.githubId,
+        github_username: dto.githubUsername,
+        github_avatar_url: dto.githubAvatarUrl,
+      });
+      await this.userRepo.save(user);
+    } else {
+      // Update profile info on each login
+      await this.userRepo.update(user.id, {
+        github_username: dto.githubUsername,
+        github_avatar_url: dto.githubAvatarUrl,
+      });
+    }
+
+    return user;
+  }
+
+  async generateTokenPair(user: User): Promise<TokenPair> {
+    const payload: JwtPayload = {
+      sub: user.id,
+      githubId: user.github_id,
+      username: user.github_username,
+    };
+
+    // Access token: short-lived (15 minutes), RS256 signed
+    const accessToken = this.jwtService.sign(payload, {
+      expiresIn: '15m',
+      algorithm: 'RS256',
+    });
+
+    // Refresh token: long-lived (30 days), opaque random string
+    const rawRefreshToken = uuidv4() + '-' + uuidv4(); // 72 chars of entropy
+    const tokenHash = crypto
+      .createHash('sha256')
+      .update(rawRefreshToken)
+      .digest('hex');
+
+    const expiresAt = new Date();
+    expiresAt.setDate(expiresAt.getDate() + 30);
+
+    // Revoke all existing refresh tokens for this user (single-session policy)
+    await this.refreshTokenRepo.update(
+      { userId: user.id, isRevoked: false },
+      { isRevoked: true },
+    );
+
+    // Save new refresh token hash
+    await this.refreshTokenRepo.save(
+      this.refreshTokenRepo.create({
+        tokenHash,
+        userId: user.id,
+        expiresAt,
+      }),
+    );
+
+    return {
+      accessToken,
+      refreshToken: rawRefreshToken,
+      expiresIn: 15 * 60, // 15 minutes in seconds
+    };
+  }
+
+  async refreshTokens(rawRefreshToken: string): Promise<TokenPair> {
+    const tokenHash = crypto
+      .createHash('sha256')
+      .update(rawRefreshToken)
+      .digest('hex');
+
+    const storedToken = await this.refreshTokenRepo.findOne({
+      where: { tokenHash },
+      relations: ['user'],
+    });
+
+    if (!storedToken) {
+      throw new UnauthorizedException('Invalid refresh token');
+    }
+    if (storedToken.isRevoked) {
+      // Possible token theft — revoke all tokens for this user
+      this.logger.warn(
+        `Revoked refresh token reused for user ${storedToken.userId} — revoking all tokens`,
+      );
+      await this.refreshTokenRepo.update(
+        { userId: storedToken.userId },
+        { isRevoked: true },
+      );
+      throw new UnauthorizedException('Refresh token reuse detected');
+    }
+    if (storedToken.expiresAt < new Date()) {
+      throw new UnauthorizedException('Refresh token expired');
+    }
+
+    // Rotate: revoke old, issue new pair
+    await this.refreshTokenRepo.update(storedToken.id, { isRevoked: true });
+    return this.generateTokenPair(storedToken.user);
+  }
+
+  async revokeRefreshToken(rawRefreshToken: string): Promise<void> {
+    const tokenHash = crypto
+      .createHash('sha256')
+      .update(rawRefreshToken)
+      .digest('hex');
+    await this.refreshTokenRepo.update({ tokenHash }, { isRevoked: true });
+  }
+}

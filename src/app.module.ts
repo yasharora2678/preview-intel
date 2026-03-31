@@ -7,8 +7,12 @@ import { WebhooksModule } from './features/webhooks/webhooks.module';
 import { ScheduleModule } from '@nestjs/schedule'
 import { OutboxPollerModule } from './infrastructure/outbox-poller/outbox-poller.module';
 import { QueueModule } from './features/queue/queue.module';
-import { GithubModule } from './infrastructure/github/github-module';
 import { LoggerModule } from 'nestjs-pino';
+import { CacheModule } from './features/cache/cache.module';
+import { AppCqrsModule } from './infrastructure/cqrs/cqrs.module';
+import { AuthModule } from './features/auth/auth.module';
+import { ReviewModule } from './features/reviews/reviews.module';
+import { GithubAppModule } from './infrastructure/github/github-app.module';
 
 @Module({
   imports: [
@@ -18,7 +22,11 @@ import { LoggerModule } from 'nestjs-pino';
     WebhooksModule,
     OutboxPollerModule,
     QueueModule,
-    GithubModule,
+    GithubAppModule,
+    CacheModule,
+    AppCqrsModule,
+    AuthModule,
+    ReviewModule,
     LoggerModule.forRoot({
       pinoHttp: {
         level: process.env.NODE_ENV === 'production' ? 'info' : 'debug',

@@ -8,6 +8,7 @@ import { DtoValidation } from './infrastructure/http/exceptions/exceptions';
 import { Logger } from 'nestjs-pino';
 import { addTransactionalDataSource, initializeTransactionalContext } from 'typeorm-transactional';
 import { DataSource } from 'typeorm';
+import cookieParser from 'cookie-parser';
 
 async function bootstrap() {
   initializeTransactionalContext();
@@ -21,6 +22,8 @@ async function bootstrap() {
 
   const configService = app.get(ConfigService);
   const port = configService.get<number>('APP_PORT');
+
+  app.use(cookieParser());
   app.enableCors();
   app.useLogger(app.get(Logger));
   app.use(urlencoded({ extended: true, limit: '50mb' }));

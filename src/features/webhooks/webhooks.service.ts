@@ -3,7 +3,7 @@ import { Inject, Injectable, Logger } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Transactional } from 'typeorm-transactional';
 import { CreateInstallationHandler } from '../installations/create-installation.service';
-import { CreateRepositoryHandler } from '../repositories/create-repository.service';
+import { CreateRepositoryHandler } from '../repositories/create-repository/create-repository.service';
 
 const PROCESSABLE_ACTIONS = new Set(['opened', 'synchronize', 'reopened']);
 
