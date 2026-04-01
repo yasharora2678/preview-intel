@@ -2,13 +2,13 @@ import { Processor, OnWorkerEvent } from '@nestjs/bullmq';
 import { WorkerHost } from '@nestjs/bullmq';
 import { Logger } from '@nestjs/common';
 import { Job } from 'bullmq';
-import { CircuitBreakerService } from 'src/features/llm/circuit-breaker.service';
-import { LlmProviderFactory } from 'src/features/llm/llm-provider.factory';
-import { ReviewResult } from 'src/features/llm/review-provider.interface';
+import { CircuitBreakerService } from 'src/infrastructure/llm/circuit-breaker.service';
+import { LlmProviderFactory } from 'src/infrastructure/llm/llm-provider.factory';
+import { ReviewResult } from 'src/domain/review/review-provider.interface';
 import { ReviewsService } from 'src/features/reviews/reviews.service';
 import { GithubClientService } from 'src/infrastructure/github/github-client.service';
 import { GithubCommentService } from 'src/infrastructure/github/github-comment.service';
-import { PrReviewJobData } from 'src/shared/pre-review-job-data';
+import { PrReviewJobData } from 'src/shared/pr-review-job-data';
 import { Transactional } from 'typeorm-transactional';
 
 @Processor('pr-review', {

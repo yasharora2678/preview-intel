@@ -6,7 +6,7 @@ import {
   ManyToOne,
   PrimaryGeneratedColumn,
 } from 'typeorm';
-import { PullRequest } from './pull-request.entity';
+import { PullRequest } from '../pull-request.entity';
 
 @Entity('reviews')
 export class Review {

@@ -1,10 +1,8 @@
 import { QueryHandler, IQueryHandler } from '@nestjs/cqrs';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
 import { NotFoundException } from '@nestjs/common';
 import { GetReviewDetailQuery } from '../../queries/get-review-detail.query';
-import { Review } from 'src/domain/review.entity';
-import { CacheService } from 'src/features/cache/cache.service';
+import { CacheService } from 'src/infrastructure/cache/cache.service';
 import { ReviewsRepository } from 'src/infrastructure/repositories/review-repository';
 
 

@@ -1,7 +1,7 @@
 import { QueryHandler, IQueryHandler } from '@nestjs/cqrs';
 import { InjectRepository } from '@nestjs/typeorm';
 import { GetRepositoryReviewsQuery } from '../../queries/get-repository-reviews.query';
-import { CacheService } from 'src/features/cache/cache.service';
+import { CacheService } from 'src/infrastructure/cache/cache.service';
 import { ReviewsRepository } from 'src/infrastructure/repositories/review-repository';
 
 

@@ -4,7 +4,7 @@ import {
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository as RepoEntity } from 'src/domain/repository.entity';
 import { User } from 'src/domain/user.entity';
-import { CacheService } from 'src/features/cache/cache.service';
+import { CacheService } from 'src/infrastructure/cache/cache.service';
 import { GithubRepository } from 'src/infrastructure/repositories/repositories.repository';
 import { Repository } from 'typeorm';
 import { UpdateRepositoryDto } from './update-repository.dto';

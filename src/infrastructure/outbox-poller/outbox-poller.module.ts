@@ -1,6 +1,6 @@
 import { Module } from '@nestjs/common';
 import { OutboxPollerService } from './outbox-poller.service';
-import { QueueModule } from 'src/features/queue/queue.module';
+import { QueueModule } from 'src/infrastructure/queue/queue.module';
 import { OutboxMessageRepository } from '../repositories/outbox-message.repository';
 
 @Module({

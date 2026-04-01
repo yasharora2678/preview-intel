@@ -5,7 +5,7 @@ import {
   ReviewProvider,
   ReviewResult,
   ReviewResultSchema,
-} from '../review-provider.interface';
+} from '../../../domain/review/review-provider.interface';
 
 const SYSTEM_PROMPT = `You are a senior software engineer conducting a pull request review.
 Your job is to provide a thorough, constructive code review that helps the developer improve their code.
@@ -25,7 +25,7 @@ You MUST respond with ONLY a valid JSON object matching this exact schema:
   "issues": [{
     "type": "bug|security|style|performance|test",
     "severity": "critical|warning|suggestion",
-    "file": "REQUIRED - always use the exact filename from the changed files list above. Never null.",
+    "file": "path/to/file",
     "line": <number or null>,
     "description": "what is wrong",
     "suggestion": "how to fix it"
@@ -33,22 +33,17 @@ You MUST respond with ONLY a valid JSON object matching this exact schema:
   "positives": ["thing done well"],
   "missing_tests": <boolean>,
   "breaking_change": <boolean>
-}
-
-STRICT RULES:
-- "file" is ALWAYS required. Use the exact filename from the PR diff (e.g. "src/app.module.ts").
-- Never use null for "file". If unsure, use the most relevant file from the changed files.
-- Do not include any explanation outside the JSON object.`;
+}`;
 
 @Injectable()
-export class GroqProvider implements ReviewProvider {
-  private readonly logger = new Logger(GroqProvider.name);
+export class HuggingFaceProvider implements ReviewProvider {
+  private readonly logger = new Logger(HuggingFaceProvider.name);
 
-  private readonly MODEL = 'llama-3.3-70b-versatile';
+  private readonly MODEL = 'Qwen/Qwen2.5-Coder-32B-Instruct';
 
-  // ✅ Groq — free, fast, OpenAI-compatible
+  // ✅ Correct router URL — no /hf-inference/ segment
   private readonly API_URL =
-    'https://api.groq.com/openai/v1/chat/completions';
+    'https://router.huggingface.co/v1/chat/completions';
 
   private readonly API_KEY: string;
 
@@ -56,17 +51,9 @@ export class GroqProvider implements ReviewProvider {
     this.API_KEY = apiKey;
   }
 
-  getName(): string {
-    return 'groq';
-  }
-
-  getModel(): string {
-    return this.MODEL;
-  }
-
-  estimateTokens(text: string): number {
-    return Math.ceil(text.length / 4);
-  }
+  getName(): string { return 'huggingface'; }
+  getModel(): string { return this.MODEL; }
+  estimateTokens(text: string): number { return Math.ceil(text.length / 4); }
 
   private buildUserPrompt(diff: DiffInput): string {
     const filesSection = diff.files
@@ -88,11 +75,11 @@ ${filesSection}
 Review the above pull request and respond with JSON only.`;
   }
 
-async review(diff: DiffInput): Promise<ReviewResult> {
-  const userPrompt = this.buildUserPrompt(diff);
-  this.logger.log({ files: diff.files.length }, 'Calling Groq model');
+  async review(diff: DiffInput): Promise<ReviewResult> {
+    const userPrompt = this.buildUserPrompt(diff);
 
-  try {
+    this.logger.log({ files: diff.files.length }, 'Calling HuggingFace model');
+
     const response = await axios.post(
       this.API_URL,
       {
@@ -102,8 +89,7 @@ async review(diff: DiffInput): Promise<ReviewResult> {
           { role: 'user', content: userPrompt },
         ],
         temperature: 0.1,
-        max_tokens: 2000,
-        // reasoning_effort: 'none',
+        max_tokens: 1000,
       },
       {
         headers: {
@@ -114,11 +100,11 @@ async review(diff: DiffInput): Promise<ReviewResult> {
       },
     );
 
-    let text = response.data?.choices?.[0]?.message?.content;
-    if (!text) throw new Error('Empty response from Groq');
+    const text = response.data?.choices?.[0]?.message?.content;
 
-    // Strip <think> blocks
-    text = text.replace(/<think>[\s\S]*?<\/think>/g, '').trim();
+    if (!text) {
+      throw new Error('Empty response from HuggingFace');
+    }
 
     let parsed: unknown;
     try {
@@ -126,7 +112,9 @@ async review(diff: DiffInput): Promise<ReviewResult> {
       if (!jsonMatch) throw new Error();
       parsed = JSON.parse(jsonMatch[0]);
     } catch {
-      throw new Error(`Groq returned invalid JSON: ${text.substring(0, 200)}`);
+      throw new Error(
+        `HuggingFace returned invalid JSON: ${text.substring(0, 200)}`,
+      );
     }
 
     const validated = ReviewResultSchema.safeParse(parsed);
@@ -136,32 +124,5 @@ async review(diff: DiffInput): Promise<ReviewResult> {
     }
 
     return validated.data;
-
-  } catch (error) {
-    if (axios.isAxiosError(error)) {
-      const status = error.response?.status;
-      const groqError = error.response?.data?.error;
-
-      this.logger.error(
-        { status, groqError, message: groqError?.message },
-        '🔴 Groq API error details',
-      );
-
-      if (status === 429) {
-        // ✅ Parse the wait time Groq gives you and wait before throwing
-        // so BullMQ retries after the right delay
-        const waitMatch = groqError?.message?.match(/try again in ([\d.]+)s/);
-        const waitMs = waitMatch ? Math.ceil(parseFloat(waitMatch[1]) * 1000) + 500 : 5000;
-
-        this.logger.warn({ waitMs }, '⏳ Rate limited — waiting before retry');
-        await new Promise((resolve) => setTimeout(resolve, waitMs));
-
-        throw new Error(`Groq rate limit — retrying after ${waitMs}ms`);
-      }
-
-      if (status === 401) throw new Error('Invalid Groq API key.');
-    }
-    throw error;
   }
-}
 }

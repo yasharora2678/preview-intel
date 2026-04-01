@@ -5,7 +5,7 @@ import {
   ReviewProvider,
   ReviewResult,
   ReviewResultSchema,
-} from '../review-provider.interface';
+} from '../../../domain/review/review-provider.interface';
 
 const SYSTEM_PROMPT = `You are a senior software engineer conducting a pull request review.
 Your job is to provide a thorough, constructive code review that helps the developer improve their code.

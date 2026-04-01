@@ -4,13 +4,7 @@ import { ConfigModule, ConfigService } from '@nestjs/config';
 import { GithubModule } from 'src/infrastructure/github/github-module';
 import { PrReviewProcessor } from 'src/infrastructure/processors/pr-review-processor/pr-review-processor';
 import { LlmModule } from '../llm/llm.module';
-import { ReviewsRepository } from 'src/infrastructure/repositories/review-repository';
-import { GithubRepository } from 'src/infrastructure/repositories/repositories.repository';
-import { PullRequestRepository } from 'src/infrastructure/repositories/pull-request.repository';
-import { ReviewIssueRepository } from 'src/infrastructure/repositories/review-issue.repository';
-import { ReviewsService } from '../reviews/reviews.service';
-import { QueryBus } from '@nestjs/cqrs';
-import { ReviewModule } from '../reviews/reviews.module';
+import { ReviewModule } from 'src/features/reviews/reviews.module';
 
 @Module({
   imports: [

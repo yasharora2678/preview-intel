@@ -1,5 +1,5 @@
 import { ICommand } from '@nestjs/cqrs';
-import { ReviewStatus } from 'src/domain/review-status.enum';
+import { ReviewStatus } from 'src/domain/review/review-status.enum';
 
 export class UpdateReviewStatusCommand implements ICommand {
   constructor(

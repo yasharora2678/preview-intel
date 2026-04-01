@@ -6,9 +6,9 @@ import { DatabaseModule } from './infrastructure/database/database.module';
 import { WebhooksModule } from './features/webhooks/webhooks.module';
 import { ScheduleModule } from '@nestjs/schedule'
 import { OutboxPollerModule } from './infrastructure/outbox-poller/outbox-poller.module';
-import { QueueModule } from './features/queue/queue.module';
+import { QueueModule } from './infrastructure/queue/queue.module';
 import { LoggerModule } from 'nestjs-pino';
-import { CacheModule } from './features/cache/cache.module';
+import { CacheModule } from './infrastructure/cache/cache.module';
 import { AppCqrsModule } from './infrastructure/cqrs/cqrs.module';
 import { AuthModule } from './features/auth/auth.module';
 import { ReviewModule } from './features/reviews/reviews.module';

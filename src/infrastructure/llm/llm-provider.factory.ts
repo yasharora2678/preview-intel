@@ -3,7 +3,7 @@ import { ConfigService } from '@nestjs/config';
 import { OpenAIProvider } from './providers/openai.provider';
 import { GroqProvider } from './providers/groq.provider';
 import * as crypto from 'crypto';
-import { ReviewProvider } from './review-provider.interface';
+import { ReviewProvider } from '../../domain/review/review-provider.interface';
 import { InstallationRepository } from 'src/infrastructure/repositories/installation.repository';
 import { HuggingFaceProvider } from './providers/hugging-face.provider';
 

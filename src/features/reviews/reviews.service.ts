@@ -4,19 +4,19 @@ import {
   ForbiddenException,
   Logger,
 } from '@nestjs/common';
-import { CommandBus, QueryBus } from '@nestjs/cqrs';
+import { QueryBus } from '@nestjs/cqrs';
 import { InjectRepository } from '@nestjs/typeorm';
-import { ReviewStatus } from 'src/domain/review-status.enum';
-import { Review } from 'src/domain/review.entity';
+import { ReviewStatus } from 'src/domain/review/review-status.enum';
 import { User } from 'src/domain/user.entity';
+import { Review } from 'src/domain/review/review.entity';
 import { GetRepositoryReviewsQuery } from 'src/infrastructure/cqrs/queries/get-repository-reviews.query';
 import { GetReviewDetailQuery } from 'src/infrastructure/cqrs/queries/get-review-detail.query';
 import { PaginationDto } from 'src/infrastructure/dto/pagination.dto';
 import { PullRequestRepository } from 'src/infrastructure/repositories/pull-request.repository';
 import { GithubRepository } from 'src/infrastructure/repositories/repositories.repository';
 import { ReviewsRepository } from 'src/infrastructure/repositories/review-repository';
-import { PrReviewJobData } from 'src/shared/pre-review-job-data';
-import { ReviewResult } from '../llm/review-provider.interface';
+import { PrReviewJobData } from 'src/shared/pr-review-job-data';
+import { ReviewResult } from '../../domain/review/review-provider.interface';
 import { ReviewIssueRepository } from 'src/infrastructure/repositories/review-issue.repository';
 
 @Injectable()

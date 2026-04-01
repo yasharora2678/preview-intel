@@ -1,7 +1,7 @@
 
 import { Module } from '@nestjs/common';
 import { PrReviewProcessor } from './pr-review-processor';
-import { LlmModule } from 'src/features/llm/llm.module';
+import { LlmModule } from 'src/infrastructure/llm/llm.module';
 import { ReviewModule } from 'src/features/reviews/reviews.module';
 import { GithubModule } from 'src/infrastructure/github/github-module';
 

@@ -1,8 +1,8 @@
 import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
 import { InjectRepository } from '@nestjs/typeorm';
 import { CreateReviewCommand } from '../../commands/create-review.command';
-import { Review } from 'src/domain/review.entity';
-import { ReviewStatus } from 'src/domain/review-status.enum';
+import { Review } from 'src/domain/review/review.entity';
+import { ReviewStatus } from 'src/domain/review/review-status.enum';
 import { ReviewsRepository } from 'src/infrastructure/repositories/review-repository';
 
 

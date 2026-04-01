@@ -1,6 +1,6 @@
 import { Injectable, Logger } from '@nestjs/common';
 import CircuitBreaker from 'opossum';
-import { ReviewProvider, DiffInput, ReviewResult } from './review-provider.interface';
+import { ReviewProvider, DiffInput, ReviewResult } from '../../domain/review/review-provider.interface';
 
 @Injectable()
 export class CircuitBreakerService {

@@ -6,7 +6,7 @@ import {
   ManyToOne,
   PrimaryGeneratedColumn,
 } from 'typeorm';
-import { Review } from './review.entity';
+import { Review } from './review/review.entity';
 
 @Entity('review_issues')
 export class ReviewIssue {

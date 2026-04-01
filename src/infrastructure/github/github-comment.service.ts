@@ -1,8 +1,8 @@
 import { Inject, Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { Octokit } from '@octokit/rest';
-import { ReviewResult } from 'src/features/llm/review-provider.interface';
-import { PrReviewJobData } from 'src/shared/pre-review-job-data';
+import { ReviewResult } from 'src/domain/review/review-provider.interface';
+import { PrReviewJobData } from 'src/shared/pr-review-job-data';
 import { OCTOKIT_APP } from './github-app.module';
 
 @Injectable()

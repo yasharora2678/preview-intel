@@ -3,7 +3,7 @@ import { RepositoriesService } from './update-repository.service';
 import { GithubRepository } from 'src/infrastructure/repositories/repositories.repository';
 import { InstallationRepository } from 'src/infrastructure/repositories/installation.repository';
 import { RepositoriesController } from './update-repository.controller';
-import { CacheService } from 'src/features/cache/cache.service';
+import { CacheService } from 'src/infrastructure/cache/cache.service';
 
 @Module({
   controllers: [RepositoriesController],

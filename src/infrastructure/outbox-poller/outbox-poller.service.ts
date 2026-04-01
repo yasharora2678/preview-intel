@@ -7,7 +7,7 @@ import { OutboxMessageRepository } from '../repositories/outbox-message.reposito
 import { ConfigService } from '@nestjs/config';
 import { OutboxMessage } from 'src/domain/outbox-message/outbox-message.entity';
 import * as crypto from 'crypto';
-import { JobPriority } from 'src/shared/pre-review-job-data';
+import { JobPriority } from 'src/shared/pr-review-job-data';
 import { OutBoxStatus } from 'src/domain/outbox-message/enums/outbox-message.enum';
 import { LessThanOrEqual } from 'typeorm';
 

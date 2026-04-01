@@ -1,6 +1,6 @@
 import { Inject, Injectable, Logger } from '@nestjs/common';
 import { Octokit } from '@octokit/rest';
-import { DiffInput } from 'src/features/llm/review-provider.interface';
+import { DiffInput } from 'src/domain/review/review-provider.interface';
 import { OCTOKIT_APP } from './github-app.module';
 
 const SKIP_PATTERNS = [
