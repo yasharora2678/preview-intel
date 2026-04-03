@@ -1,16 +1,12 @@
+import { ExpressAdapter } from '@bull-board/express';
+import { BullBoardModule } from '@bull-board/nestjs';
 import { BullModule } from '@nestjs/bullmq';
 import { Module } from '@nestjs/common';
 import { ConfigModule, ConfigService } from '@nestjs/config';
-import { GithubModule } from 'src/infrastructure/github/github-module';
-import { PrReviewProcessor } from 'src/infrastructure/processors/pr-review-processor/pr-review-processor';
-import { LlmModule } from '../llm/llm.module';
-import { ReviewModule } from 'src/features/reviews/reviews.module';
+import { BullMQAdapter } from '@bull-board/api/bullMQAdapter'; 
 
 @Module({
   imports: [
-    GithubModule,
-    LlmModule,
-    ReviewModule,
     BullModule.forRootAsync({
       imports: [ConfigModule],
       useFactory: (config: ConfigService) => ({
@@ -33,15 +29,15 @@ import { ReviewModule } from 'src/features/reviews/reviews.module';
         removeOnFail: false,
       },
     }),
-  ],
-  providers: [
-    PrReviewProcessor,
-    // ReviewsService,
-    // ReviewsRepository,
-    // QueryBus,
-    // GithubRepository,
-    // PullRequestRepository,
-    // ReviewIssueRepository,
+    BullBoardModule.forRoot({
+      route: '/admin/queues',
+      adapter: ExpressAdapter,
+    }),
+    
+    BullBoardModule.forFeature({
+      name: 'pr-review',
+      adapter: BullMQAdapter,
+    }),
   ],
   exports: [BullModule],
 })

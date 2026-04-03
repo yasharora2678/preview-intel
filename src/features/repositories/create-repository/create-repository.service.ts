@@ -1,5 +1,4 @@
 import { Injectable, Logger } from '@nestjs/common';
-import { InjectRepository } from '@nestjs/typeorm';
 import { InstallationRepository } from 'src/infrastructure/repositories/installation.repository';
 import { GithubRepository } from 'src/infrastructure/repositories/repositories.repository';
 
@@ -8,9 +7,7 @@ export class CreateRepositoryHandler {
   private readonly logger = new Logger(CreateRepositoryHandler.name);
 
   constructor(
-    @InjectRepository(GithubRepository)
     private readonly githubRepository: GithubRepository,
-    @InjectRepository(InstallationRepository)
     private readonly installationRepository: InstallationRepository,
   ) {}
 
@@ -23,10 +20,13 @@ export class CreateRepositoryHandler {
     });
 
     if (existingRepositry) {
-      await this.githubRepository.update({id: existingRepositry.id}, {
-        full_name: payload.repository.full_name,
-        default_branch: payload.repository.default_branch,
-      });
+      await this.githubRepository.update(
+        { id: existingRepositry.id },
+        {
+          full_name: payload.repository.full_name,
+          default_branch: payload.repository.default_branch,
+        },
+      );
       return existingRepositry;
     }
 

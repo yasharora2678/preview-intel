@@ -2,6 +2,13 @@ import { Injectable, Logger } from '@nestjs/common';
 import CircuitBreaker from 'opossum';
 import { ReviewProvider, DiffInput, ReviewResult } from '../../domain/review/review-provider.interface';
 
+export class CircuitOpenError extends Error {
+  constructor(providerName: string) {
+    super(`Circuit breaker is open for provider: ${providerName}`);
+    this.name = 'CircuitOpenError';
+  }
+}
+
 @Injectable()
 export class CircuitBreakerService {
   private readonly logger = new Logger(CircuitBreakerService.name);
@@ -34,6 +41,16 @@ export class CircuitBreakerService {
 
   async review(provider: ReviewProvider, diff: DiffInput): Promise<ReviewResult> {
     const breaker = this.getOrCreateBreaker(provider);
-    return breaker.fire(diff) as Promise<ReviewResult>;
+    try{
+      return await breaker.fire(diff) as Promise<ReviewResult>;
+    }
+    catch(error) {
+      // opossum throws a generic error when circuit is open.
+      // We check breaker.opened to distinguish "circuit open" from a real LLM error
+      if (breaker.opened) {
+        throw new CircuitOpenError(provider.getName());
+      }
+      throw error;
+    }
   }
 }

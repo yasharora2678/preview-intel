@@ -1,15 +1,17 @@
 import { Processor, OnWorkerEvent } from '@nestjs/bullmq';
 import { WorkerHost } from '@nestjs/bullmq';
 import { Logger } from '@nestjs/common';
-import { Job } from 'bullmq';
-import { CircuitBreakerService } from 'src/infrastructure/llm/circuit-breaker.service';
+import { DelayedError, Job } from 'bullmq';
+import {
+  CircuitBreakerService,
+  CircuitOpenError,
+} from 'src/infrastructure/llm/circuit-breaker.service';
 import { LlmProviderFactory } from 'src/infrastructure/llm/llm-provider.factory';
 import { ReviewResult } from 'src/domain/review/review-provider.interface';
 import { ReviewsService } from 'src/features/reviews/reviews.service';
 import { GithubClientService } from 'src/infrastructure/github/github-client.service';
 import { GithubCommentService } from 'src/infrastructure/github/github-comment.service';
 import { PrReviewJobData } from 'src/shared/pr-review-job-data';
-import { Transactional } from 'typeorm-transactional';
 
 @Processor('pr-review', {
   concurrency: 5,
@@ -27,8 +29,7 @@ export class PrReviewProcessor extends WorkerHost {
     super();
   }
 
-  @Transactional()
-  async process(job: Job<PrReviewJobData>): Promise<void> {
+  async process(job: Job<PrReviewJobData>, token?: string): Promise<void> {
     const { data } = job;
     this.logger.log(
       { jobId: job.id, pr: data.prNumber },
@@ -79,12 +80,11 @@ export class PrReviewProcessor extends WorkerHost {
       );
 
       // 7. Post review comment on GitHub PR
-      const [owner2, repo2] = data.repoFullName.split('/');
       const githubReviewId = await this.commentService.postReview(
         data,
         mergedResult,
-        owner2,
-        repo2,
+        owner,
+        repo,
       );
 
       if (githubReviewId) {
@@ -98,9 +98,8 @@ export class PrReviewProcessor extends WorkerHost {
       const statusState =
         mergedResult.score >= 70
           ? 'success'
-          : mergedResult.score >= 50
-            ? 'pending' // neutral
-            : 'failure';
+          : 'failure';
+
       await this.commentService.postStatusCheck(
         data,
         statusState,
@@ -112,13 +111,21 @@ export class PrReviewProcessor extends WorkerHost {
         '✅ PR review completed',
       );
     } catch (err) {
-        await this.reviewService.markFailed(
-          review.id,
-          (err as Error).message,
+      if (err instanceof CircuitOpenError) {
+        this.logger.warn(
+          { pr: data.prNumber, provider: (err as CircuitOpenError).message },
+          '🔴 Circuit open — moving job to delayed (5 min)',
         );
-       await this.commentService.postStatusCheck(data, 'error');
-       throw err; // re-throw so BullMQ retries the job
-     }
+        // Move job to delayed state — does NOT burn a retry attempt
+        await job.moveToDelayed(Date.now() + 5 * 60 * 1000, token);
+        // DelayedError signals BullMQ that the job was intentionally delayed, not failed
+        throw new DelayedError();
+      }
+
+      await this.reviewService.markFailed(review.id, (err as Error).message);
+      await this.commentService.postStatusCheck(data, 'error');
+      throw err; // re-throw so BullMQ retries the job
+    }
   }
 
   private mergeResults(results: ReviewResult[]): ReviewResult {

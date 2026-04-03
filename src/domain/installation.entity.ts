@@ -24,11 +24,11 @@ export class Installation {
   @Column()
   github_account_type: string;
 
-  @ManyToOne(() => User, (user) => user.installations)
+  @ManyToOne(() => User, (user) => user.installations, {nullable: true})
   @JoinColumn({ name: 'user_id' })
   user: User;
 
-  @Column()
+  @Column({nullable: true})
   user_id: string;
 
   @Column({ nullable: true })

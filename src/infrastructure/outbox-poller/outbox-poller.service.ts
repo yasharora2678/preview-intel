@@ -2,7 +2,6 @@ import { Injectable, Logger, OnModuleDestroy } from '@nestjs/common';
 import { Cron, CronExpression } from '@nestjs/schedule';
 import { InjectQueue } from '@nestjs/bullmq';
 import { Queue } from 'bullmq';
-import { InjectRepository } from '@nestjs/typeorm';
 import { OutboxMessageRepository } from '../repositories/outbox-message.repository';
 import { ConfigService } from '@nestjs/config';
 import { OutboxMessage } from 'src/domain/outbox-message/outbox-message.entity';
@@ -10,6 +9,7 @@ import * as crypto from 'crypto';
 import { JobPriority } from 'src/shared/pr-review-job-data';
 import { OutBoxStatus } from 'src/domain/outbox-message/enums/outbox-message.enum';
 import { LessThanOrEqual } from 'typeorm';
+import { CacheService } from 'src/infrastructure/cache/cache.service';
 
 @Injectable()
 export class OutboxPollerService implements OnModuleDestroy {
@@ -19,15 +19,15 @@ export class OutboxPollerService implements OnModuleDestroy {
   constructor(
     @InjectQueue('pr-review')
     private readonly queue: Queue,
-    @InjectRepository(OutboxMessageRepository)
     private readonly repository: OutboxMessageRepository,
     private readonly configService: ConfigService,
+    private readonly cacheService: CacheService,
   ) {}
 
   @Cron('*/60 * * * * *')
   async pollOutbox() {
-    console.log("running outbox poller")
-    if (this.isPolling) return; // prevent overlapping polls
+    console.log('running outbox poller');
+    if (this.isPolling) return;
     this.isPolling = true;
 
     try {
@@ -62,11 +62,23 @@ export class OutboxPollerService implements OnModuleDestroy {
 
       // If synchronize: remove old job for this PR first
       if (payload.action === 'synchronize') {
-        const oldJobId = crypto
-          .createHash('md5')
-          .update(`${payload.githubRepoId}:${payload.prNumber}:old`)
-          .digest('hex');
-        // BullMQ jobId-based dedup handles this automatically
+        const prJobKey = `pr-dedup:${payload.githubRepoId}:${payload.prNumber}`;
+        const previousJobId = await this.cacheService.get<string>(prJobKey);
+
+        if (previousJobId && previousJobId !== jobId) {
+          const previousJob = await this.queue.getJob(previousJobId);
+          if (previousJob) {
+            const state = await previousJob.getState();
+            // Only remove if still waiting — never remove an active (running) job
+            if (state === 'waiting' || state === 'delayed') {
+              await previousJob.remove();
+              this.logger.log(
+                { previousJobId, prNumber: payload.prNumber },
+                'Removed stale waiting job for re-pushed PR',
+              );
+            }
+          }
+        }
       }
 
       await this.queue.add(
@@ -77,6 +89,9 @@ export class OutboxPollerService implements OnModuleDestroy {
           priority,
         },
       );
+
+      const prJobKey = `pr-dedup:${payload.githubRepoId}:${payload.prNumber}`;
+      await this.cacheService.set(prJobKey, jobId, 60 * 60 * 24);
 
       outboxMessage.markAsSent();
 
@@ -106,7 +121,9 @@ export class OutboxPollerService implements OnModuleDestroy {
   async cleanupOldEvents(): Promise<void> {
     const outBoxMessage = await this.repository.delete({
       status: OutBoxStatus.PUBLISHED,
-      published_at: LessThanOrEqual(new Date(Date.now() - 7 * 24 * 60 * 60 * 1000)),
+      published_at: LessThanOrEqual(
+        new Date(Date.now() - 7 * 24 * 60 * 60 * 1000),
+      ),
     });
 
     this.logger.log(

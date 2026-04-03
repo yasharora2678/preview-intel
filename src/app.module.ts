@@ -13,6 +13,8 @@ import { AppCqrsModule } from './infrastructure/cqrs/cqrs.module';
 import { AuthModule } from './features/auth/auth.module';
 import { ReviewModule } from './features/reviews/reviews.module';
 import { GithubAppModule } from './infrastructure/github/github-app.module';
+import { UpdateRepositoryModule } from './features/repositories/update-repository/update-repository.module';
+import { ProcessorModule } from './infrastructure/processors/pr-review-processor/pr-review-processor.module';
 
 @Module({
   imports: [
@@ -27,6 +29,8 @@ import { GithubAppModule } from './infrastructure/github/github-app.module';
     AppCqrsModule,
     AuthModule,
     ReviewModule,
+    ProcessorModule,
+    UpdateRepositoryModule,
     LoggerModule.forRoot({
       pinoHttp: {
         level: process.env.NODE_ENV === 'production' ? 'info' : 'debug',

@@ -1,21 +1,19 @@
 import { Module } from '@nestjs/common';
 import { JwtModule } from '@nestjs/jwt';
 import { PassportModule } from '@nestjs/passport';
-import { TypeOrmModule } from '@nestjs/typeorm';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { AuthController } from './auth.controller';
 import { AuthService } from './auth.service';
 import { GithubStrategy } from './strategies/github.strategy';
 import { JwtStrategy } from './strategies/jwt.strategy';
 import { JwtAuthGuard } from './guards/jwt-auth.guard';
-import { RefreshToken } from 'src/domain/refresh-token.entity';
-import { User } from 'src/domain/user.entity';
+import { UserRepository } from 'src/infrastructure/repositories/user-repository';
+import { RefreshTokenRepository } from 'src/infrastructure/repositories/refresh-token.repository';
 
 
 @Module({
   imports: [
     PassportModule,
-    TypeOrmModule.forFeature([User, RefreshToken]),
     JwtModule.registerAsync({
       imports: [ConfigModule],
       inject: [ConfigService],
@@ -31,7 +29,7 @@ import { User } from 'src/domain/user.entity';
     }),
   ],
   controllers: [AuthController],
-  providers: [AuthService, GithubStrategy, JwtStrategy, JwtAuthGuard],
-  exports: [AuthService, JwtAuthGuard],
+  providers: [AuthService, GithubStrategy, JwtStrategy, JwtAuthGuard, UserRepository, RefreshTokenRepository],
+  exports: [AuthService, JwtAuthGuard, UserRepository],
 })
 export class AuthModule {}

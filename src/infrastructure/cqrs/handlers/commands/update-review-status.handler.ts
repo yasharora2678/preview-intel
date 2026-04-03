@@ -1,5 +1,4 @@
 import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
-import { InjectRepository } from '@nestjs/typeorm';
 import { UpdateReviewStatusCommand } from '../../commands/update-review-status.command';
 import { CacheService } from 'src/infrastructure/cache/cache.service';
 import { ReviewsRepository } from 'src/infrastructure/repositories/review-repository';
@@ -10,7 +9,6 @@ export class UpdateReviewStatusHandler
   implements ICommandHandler<UpdateReviewStatusCommand>
 {
   constructor(
-    @InjectRepository(ReviewsRepository)
     private readonly reviewsRepository: ReviewsRepository,
     private readonly cacheService: CacheService,
   ) {}

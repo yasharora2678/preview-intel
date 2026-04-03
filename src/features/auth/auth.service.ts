@@ -1,16 +1,12 @@
-// apps/api/src/auth/auth.service.ts
 import {
   Injectable, Logger, UnauthorizedException,
 } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
-import { ConfigService } from '@nestjs/config';
-import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
 import * as crypto from 'crypto';
-import { v4 as uuidv4 } from 'uuid';
 import { JwtPayload } from './strategies/jwt.strategy';
 import { User } from 'src/domain/user.entity';
-import { RefreshToken } from 'src/domain/refresh-token.entity';
+import { UserRepository } from 'src/infrastructure/repositories/user-repository';
+import { RefreshTokenRepository } from 'src/infrastructure/repositories/refresh-token.repository';
 
 interface FindOrCreateUserDto {
   githubId: number;
@@ -30,12 +26,9 @@ export class AuthService {
   private readonly logger = new Logger(AuthService.name);
 
   constructor(
-    @InjectRepository(User)
-    private readonly userRepo: Repository<User>,
-    @InjectRepository(RefreshToken)
-    private readonly refreshTokenRepo: Repository<RefreshToken>,
+    private readonly userRepo: UserRepository,
+    private readonly refreshTokenRepo: RefreshTokenRepository,
     private readonly jwtService: JwtService,
-    private readonly configService: ConfigService,
   ) {}
 
   async findOrCreateUser(dto: FindOrCreateUserDto): Promise<User> {
@@ -67,6 +60,7 @@ export class AuthService {
       sub: user.id,
       githubId: user.github_id,
       username: user.github_username,
+      isAdmin: false
     };
 
     // Access token: short-lived (15 minutes), RS256 signed
@@ -76,7 +70,7 @@ export class AuthService {
     });
 
     // Refresh token: long-lived (30 days), opaque random string
-    const rawRefreshToken = uuidv4() + '-' + uuidv4(); // 72 chars of entropy
+    const rawRefreshToken = crypto.randomUUID() + '-' + crypto.randomUUID();// 72 chars of entropy
     const tokenHash = crypto
       .createHash('sha256')
       .update(rawRefreshToken)

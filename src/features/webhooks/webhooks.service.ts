@@ -1,6 +1,5 @@
 import { OutboxMessageRepository } from '../../infrastructure/repositories/outbox-message.repository';
-import { Inject, Injectable, Logger } from '@nestjs/common';
-import { InjectRepository } from '@nestjs/typeorm';
+import { Injectable, Logger } from '@nestjs/common';
 import { Transactional } from 'typeorm-transactional';
 import { CreateInstallationHandler } from '../installations/create-installation.service';
 import { CreateRepositoryHandler } from '../repositories/create-repository/create-repository.service';
@@ -12,12 +11,9 @@ export class WebHooksHandler {
   private readonly logger = new Logger(WebHooksHandler.name);
 
   constructor(
-    @InjectRepository(OutboxMessageRepository)
     private readonly outboxMessageRepository: OutboxMessageRepository,
-    @Inject(CreateInstallationHandler)
     private readonly createInstallationHandler: CreateInstallationHandler,
-    @Inject(CreateRepositoryHandler)
-    private readonly createRepositoryHandler: CreateRepositoryHandler
+    private readonly createRepositoryHandler: CreateRepositoryHandler,
   ) {}
 
   @Transactional()
@@ -52,7 +48,23 @@ export class WebHooksHandler {
     await this.createInstallationHandler.handle(payload);
 
     const repository = await this.createRepositoryHandler.handle(payload);
-    
+
+    if (!repository) {
+      this.logger.warn(
+        { repoId: payload.repository?.id },
+        'Repository could not be created — installation not found, skipping',
+      );
+      return;
+    }
+
+    if (!repository.is_enabled) {
+      this.logger.debug(
+        { repoId: repository.id, fullName: repository.full_name },
+        'Repository has reviews disabled — skipping',
+      );
+      return;
+    }
+
     const pr = payload.pull_request;
 
     const messagePayload = {
@@ -67,7 +79,7 @@ export class WebHooksHandler {
       headBranch: pr?.head?.ref,
       authorLogin: pr?.user?.login,
       action: payload.action,
-      githubPrUrl: pr?.html_url
+      githubPrUrl: pr?.html_url,
     };
 
     await this.outboxMessageRepository.storeOutboxMessage({

@@ -13,7 +13,6 @@ import { GithubModule } from 'src/infrastructure/github/github-module';
   ],
   providers: [
     PrReviewProcessor,
-    // ReviewsService,
   ],
 })
 export class ProcessorModule {}

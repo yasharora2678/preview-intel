@@ -90,7 +90,8 @@ Review the above pull request and respond with JSON only.`;
 
 async review(diff: DiffInput): Promise<ReviewResult> {
   const userPrompt = this.buildUserPrompt(diff);
-  this.logger.log({ files: diff.files.length }, 'Calling Groq model');
+  const estimatedTokens = this.estimateTokens(userPrompt);
+  this.logger.log({ estimatedTokens, files: diff.files.length }, 'Calling Groq model');
 
   try {
     const response = await axios.post(

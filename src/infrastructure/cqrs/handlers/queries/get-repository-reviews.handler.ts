@@ -1,5 +1,4 @@
 import { QueryHandler, IQueryHandler } from '@nestjs/cqrs';
-import { InjectRepository } from '@nestjs/typeorm';
 import { GetRepositoryReviewsQuery } from '../../queries/get-repository-reviews.query';
 import { CacheService } from 'src/infrastructure/cache/cache.service';
 import { ReviewsRepository } from 'src/infrastructure/repositories/review-repository';
@@ -10,7 +9,6 @@ export class GetRepositoryReviewsHandler
   implements IQueryHandler<GetRepositoryReviewsQuery>
 {
   constructor(
-    @InjectRepository(ReviewsRepository)
     private readonly reviewsRepository: ReviewsRepository,
     private readonly cacheService: CacheService,
   ) {}
@@ -30,17 +28,17 @@ export class GetRepositoryReviewsHandler
     const qb = this.reviewsRepository
       .createQueryBuilder('review')
       .innerJoin('review.pullRequest', 'pr')
-      .where('pr.repositoryId = :repoId', { repoId: query.repositoryId })
+      .where('pr.repository_id = :repoId', { repoId: query.repositoryId })
       .select([
         'review.id',
         'review.status',
         'review.score',
-        'review.llmProvider',
-        'review.createdAt',
-        'pr.githubPrNumber',
+        'review.llm_provider',
+        'review.created_at',
+        'pr.github_pr_number',
         'pr.title',
-        'pr.authorGithubLogin',
-        'pr.githubPrUrl',
+        'pr.author_login',
+        'pr.github_pr_url',
       ])
       .addSelect(
         (sub) =>
@@ -50,13 +48,13 @@ export class GetRepositoryReviewsHandler
             .where('ri.review_id = review.id'),
         'review_issue_count',
       )
-      .orderBy('review.createdAt', 'DESC')
+      .orderBy('review.created_at', 'DESC')
       .skip((query.page - 1) * query.limit)
       .take(query.limit);
 
     // Apply filters
     if (query.filters?.authorLogin) {
-      qb.andWhere('pr.authorGithubLogin = :author', {
+      qb.andWhere('pr.author_login = :author', {
         author: query.filters.authorLogin,
       });
     }
@@ -67,10 +65,10 @@ export class GetRepositoryReviewsHandler
       qb.andWhere('review.score <= :maxScore', { maxScore: query.filters.maxScore });
     }
     if (query.filters?.dateFrom) {
-      qb.andWhere('review.createdAt >= :dateFrom', { dateFrom: query.filters.dateFrom });
+      qb.andWhere('review.created_at >= :dateFrom', { dateFrom: query.filters.dateFrom });
     }
     if (query.filters?.dateTo) {
-      qb.andWhere('review.createdAt <= :dateTo', { dateTo: query.filters.dateTo });
+      qb.andWhere('review.created_at <= :dateTo', { dateTo: query.filters.dateTo });
     }
 
     const [items, total] = await qb.getManyAndCount();

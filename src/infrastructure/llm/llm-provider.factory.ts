@@ -6,6 +6,7 @@ import * as crypto from 'crypto';
 import { ReviewProvider } from '../../domain/review/review-provider.interface';
 import { InstallationRepository } from 'src/infrastructure/repositories/installation.repository';
 import { HuggingFaceProvider } from './providers/hugging-face.provider';
+import { OpenRouterProvider } from './providers/openrouter-provider';
 
 @Injectable()
 export class LlmProviderFactory {
@@ -28,7 +29,7 @@ export class LlmProviderFactory {
       where: { github_installation_id: githubInstallationId },
     });
 
-    const provider = installation?.llm_provider || 'gemini';
+    const provider = installation?.llm_provider || 'groq';
     const encryptedKey = installation?.llm_api_key_encrypted;
 
     // Decrypt per-installation key, or fall back to global env key
@@ -50,11 +51,13 @@ export class LlmProviderFactory {
         return new GroqProvider(apiKey);
       case 'openai':
         return new OpenAIProvider(apiKey);
-      default:
-        this.logger.warn(
-          `Unknown provider ${provider}, falling back to Hugging Face`,
-        );
+      case 'huggingface':
         return new HuggingFaceProvider(apiKey);
+      case 'openrouter':
+        return new OpenRouterProvider(apiKey);
+      default:
+      this.logger.warn(`Unknown provider "${provider}", falling back to Groq`);
+      return new GroqProvider(this.getGlobalKey('groq'));
     }
   }
 
@@ -62,7 +65,8 @@ export class LlmProviderFactory {
     const keyMap: Record<string, string> = {
       openai: this.config.get('OPENAI_API_KEY') || '',
       groq: this.config.get('GROQ_API_KEY') || '',
-      huggingFace: this.config.get('HUGGINGFACE_API_KEY') || ''
+      huggingface: this.config.get('HUGGINGFACE_API_KEY') || 'hf_XBXtUSkRBxAWVKoXerbwPOrnFroaiaAU',
+      openrouter: this.config.get('OPENROUTER_API_KEY') || '',
     };
     const key = keyMap[provider];
     if (!key)

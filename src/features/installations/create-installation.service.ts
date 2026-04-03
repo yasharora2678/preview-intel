@@ -1,5 +1,4 @@
 import { Injectable, Logger } from '@nestjs/common';
-import { InjectRepository } from '@nestjs/typeorm';
 import { InstallationRepository } from 'src/infrastructure/repositories/installation.repository';
 
 @Injectable()
@@ -7,7 +6,6 @@ export class CreateInstallationHandler {
   private readonly logger = new Logger(CreateInstallationHandler.name);
 
   constructor(
-    @InjectRepository(InstallationRepository)
     private readonly installationRepository: InstallationRepository,
   ) {}
 
@@ -23,10 +21,10 @@ export class CreateInstallationHandler {
       await this.installationRepository.save({
         github_installation_id: githubInstallationId,
         github_account_login: payload.repository.owner.login,
-        // user_id: payload.repository.owner.id,
         github_account_type: payload.repository.owner.type,
-        llm_provider: 'groq',
-        isActive: true,
+        llm_provider: 'openrouter',
+        is_active: true,
+        user_id: null,
       });
 
       this.logger.log({ githubInstallationId }, 'Created installation record');

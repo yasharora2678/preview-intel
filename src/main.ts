@@ -1,4 +1,4 @@
-import { NestFactory } from '@nestjs/core';
+import { HttpAdapterHost, NestFactory } from '@nestjs/core';
 import { AppModule } from './app.module';
 import { ConfigService } from '@nestjs/config';
 import { ValidationPipe, VersioningType } from '@nestjs/common';
@@ -9,6 +9,8 @@ import { Logger } from 'nestjs-pino';
 import { addTransactionalDataSource, initializeTransactionalContext } from 'typeorm-transactional';
 import { DataSource } from 'typeorm';
 import cookieParser from 'cookie-parser';
+import { AllExceptionsFilter } from './infrastructure/http/exceptions/all-exception-filter';
+import { ResponseEnvelopeInterceptor } from './infrastructure/interceptors/response-envelope.interceptor';
 
 async function bootstrap() {
   initializeTransactionalContext();
@@ -16,6 +18,7 @@ async function bootstrap() {
   const app = await NestFactory.create(AppModule, {
     rawBody: true,
   });
+  const { httpAdapter } = app.get(HttpAdapterHost);
 
   const dataSource = app.get(DataSource);
   addTransactionalDataSource(dataSource);
@@ -24,6 +27,8 @@ async function bootstrap() {
   const port = configService.get<number>('APP_PORT');
 
   app.use(cookieParser());
+  app.useGlobalFilters(new AllExceptionsFilter(httpAdapter));
+  app.useGlobalInterceptors(new ResponseEnvelopeInterceptor());
   app.enableCors();
   app.useLogger(app.get(Logger));
   app.use(urlencoded({ extended: true, limit: '50mb' }));
@@ -36,7 +41,10 @@ async function bootstrap() {
       },
     }),
   );
-  app.setGlobalPrefix('api');
+
+  app.setGlobalPrefix('api', {
+    exclude: ['admin/queues'],
+  });
   app.enableVersioning({
     type: VersioningType.URI,
   });

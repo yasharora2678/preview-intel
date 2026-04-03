@@ -98,7 +98,10 @@ export class GithubCommentService {
     const descriptions: Record<string, string> = {
       pending: 'AI review in progress...',
       success: `Review complete — Score: ${score}/100 ✅`,
-      failure: `Review complete — Score: ${score}/100 ❌ (below threshold)`,
+      failure:
+        score >= 50
+          ? `Review complete — Score: ${score}/100 ⚠️ (needs improvement)`
+          : `Review complete — Score: ${score}/100 ❌ (below threshold)`,
       error: 'Review failed — will retry automatically',
     };
 

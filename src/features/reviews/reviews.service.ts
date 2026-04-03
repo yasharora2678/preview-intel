@@ -5,7 +5,6 @@ import {
   Logger,
 } from '@nestjs/common';
 import { QueryBus } from '@nestjs/cqrs';
-import { InjectRepository } from '@nestjs/typeorm';
 import { ReviewStatus } from 'src/domain/review/review-status.enum';
 import { User } from 'src/domain/user.entity';
 import { Review } from 'src/domain/review/review.entity';
@@ -15,9 +14,11 @@ import { PaginationDto } from 'src/infrastructure/dto/pagination.dto';
 import { PullRequestRepository } from 'src/infrastructure/repositories/pull-request.repository';
 import { GithubRepository } from 'src/infrastructure/repositories/repositories.repository';
 import { ReviewsRepository } from 'src/infrastructure/repositories/review-repository';
-import { PrReviewJobData } from 'src/shared/pr-review-job-data';
+import { JobPriority, PrReviewJobData } from 'src/shared/pr-review-job-data';
 import { ReviewResult } from '../../domain/review/review-provider.interface';
 import { ReviewIssueRepository } from 'src/infrastructure/repositories/review-issue.repository';
+import { InjectQueue } from '@nestjs/bullmq';
+import { Queue } from 'bullmq';
 
 @Injectable()
 export class ReviewsService {
@@ -25,15 +26,11 @@ export class ReviewsService {
 
   constructor(
     private readonly queryBus: QueryBus,
-    @InjectRepository(ReviewsRepository)
     private readonly reviewsRepository: ReviewsRepository,
-    @InjectRepository(PullRequestRepository)
     private readonly pullRequestRepository: PullRequestRepository,
-    @InjectRepository(GithubRepository)
     private readonly githubRepository: GithubRepository,
-    @InjectRepository(ReviewIssueRepository)
     private readonly reviewIssueRepository: ReviewIssueRepository,
-    // private readonly queueService: QueueService,
+    @InjectQueue('pr-review') private readonly queue: Queue,
   ) {}
 
   async getRepositoryReviews(
@@ -90,30 +87,28 @@ export class ReviewsService {
     await this.verifyRepoAccess(repo.id, user);
 
     const pr = review.pullRequest;
-
-    this.logger.log({
-      msg: 'Manual re-review triggered',
-      reviewId,
+    const jobData: PrReviewJobData = {
+      installationId: repo.installation.github_installation_id,
+      repositoryId: repo.id,
+      githubRepoId: repo.github_repo_id,
+      repoFullName: repo.full_name,
       prNumber: pr.github_pr_number,
-      triggeredBy: user.github_username,
+      prTitle: pr.title,
+      headCommitSha: pr.head_commit_sha,
+      baseBranch: pr.base_branch,
+      headBranch: pr.head_branch,
+      authorLogin: pr.author_login,
+      githubPrUrl: pr.github_pr_url,
+      action: 'reopened',
+    };
+
+    const job = await this.queue.add('review-pr', jobData, {
+      priority: JobPriority.HIGH,
     });
 
-    // await this.queueService.enqueueReview({
-    //   outboxEventId: `rereview-${reviewId}`,
-    //   eventType: 'pull_request.rereview',
-    //   prNumber: pr.github_pr_number,
-    //   prTitle: pr.title,
-    //   prUrl: pr.github_pr_url,
-    //   headSha: pr.head_commit_sha,
-    //   baseBranch: pr.base_branch,
-    //   headBranch: pr.head_branch,
-    //   authorLogin: pr.author_login,
-    //   repoFullName: repo.full_name,
-    //   repoGithubId: repo.github_repo_id,
-    //   githubInstallationId: repo.installation.github_installation_id,
-    // });
+    this.logger.log({ jobId: job.id, reviewId }, 'Manual re-review queued');
 
-    return { jobId: `rereview-${reviewId}` };
+    return { jobId: job.id };
   }
 
   async getPullRequestReviews(prId: string, user: User) {
@@ -133,7 +128,7 @@ export class ReviewsService {
   }
 
   private async verifyRepoAccess(repoId: string, user: User): Promise<void> {
-    // if (user.isAdmin) return;
+    if (user.is_admin) return;
 
     const repo = await this.githubRepository.findOne({
       where: { id: repoId },
@@ -275,6 +270,9 @@ export class ReviewsService {
     reviewId: string,
     githubReviewId: number,
   ): Promise<void> {
-    await this.reviewsRepository.update({ id: reviewId }, { github_review_id: githubReviewId });
+    await this.reviewsRepository.update(
+      { id: reviewId },
+      { github_review_id: githubReviewId },
+    );
   }
 }

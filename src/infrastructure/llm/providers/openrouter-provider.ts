@@ -1,0 +1,171 @@
+import { Injectable, Logger } from '@nestjs/common';
+import OpenAI from 'openai';
+import {
+  DiffInput,
+  ReviewProvider,
+  ReviewResult,
+  ReviewResultSchema,
+} from '../../../domain/review/review-provider.interface';
+
+const SYSTEM_PROMPT = `You are a senior software engineer conducting a pull request review.
+Your job is to provide a thorough, constructive code review that helps the developer improve their code.
+
+Focus on:
+- Bugs and logic errors
+- Security vulnerabilities
+- Performance issues
+- Missing error handling
+- Missing tests
+- Code maintainability
+
+You MUST respond with ONLY a valid JSON object matching this exact schema:
+{
+  "summary": "2-3 sentence overview",
+  "score": <integer 0-100>,
+  "issues": [{
+    "type": "bug|security|style|performance|test",
+    "severity": "critical|warning|suggestion",
+    "file": "REQUIRED - always use the exact filename from the changed files list above. Never null.",
+    "line": <number or null>,
+    "description": "what is wrong",
+    "suggestion": "how to fix it"
+  }],
+  "positives": ["thing done well"],
+  "missing_tests": <boolean>,
+  "breaking_change": <boolean>
+}
+
+STRICT RULES:
+- "file" is ALWAYS required. Use the exact filename from the PR diff (e.g. "src/app.module.ts").
+- Never use null for "file". If unsure, use the most relevant file from the changed files.
+- Do not include any explanation outside the JSON object.`;
+
+@Injectable()
+export class OpenRouterProvider implements ReviewProvider {
+  private readonly logger = new Logger(OpenRouterProvider.name);
+  private readonly client: OpenAI;
+
+  // OpenRouter model
+  private readonly MODEL = 'deepseek/deepseek-chat';
+
+  constructor(apiKey: string) {
+    this.client = new OpenAI({
+      apiKey,
+
+      // 🔹 ONLY CHANGE REQUIRED
+      baseURL: 'https://openrouter.ai/api/v1',
+
+      // 🔹 OpenRouter recommended headers
+      defaultHeaders: {
+        'HTTP-Referer': 'http://localhost:3000',
+        'X-Title': 'AI PR Reviewer',
+      },
+    });
+  }
+
+  getName(): string {
+    return 'openrouter';
+  }
+
+  getModel(): string {
+    return this.MODEL;
+  }
+
+  estimateTokens(text: string): number {
+    return Math.ceil(text.length / 4);
+  }
+
+  private buildUserPrompt(diff: DiffInput): string {
+    const filesSection = diff.files
+      .map(
+        (f) =>
+          `### File: ${f.filename} (${f.language})\n\`\`\`diff\n${f.patch}\n\`\`\``,
+      )
+      .join('\n\n');
+
+    return `PR Title: ${diff.prTitle} ${
+      diff.prDescription ? `PR Description: ${diff.prDescription}` : ''
+    }
+
+## Changed Files:
+${filesSection}
+
+Review the above pull request and respond with the JSON schema only.`;
+  }
+
+  async review(diff: DiffInput): Promise<ReviewResult> {
+    const userPrompt = this.buildUserPrompt(diff);
+    const estimatedTokens = this.estimateTokens(userPrompt);
+
+    this.logger.log(
+      { estimatedTokens, files: diff.files.length },
+      'Calling OpenRouter for review',
+    );
+
+    try {
+      const response = await this.client.chat.completions.create({
+        model: this.MODEL,
+        response_format: { type: 'json_object' },
+        messages: [
+          { role: 'system', content: SYSTEM_PROMPT },
+          { role: 'user', content: userPrompt },
+        ],
+        max_tokens: 2000,
+        temperature: 0.1,
+      });
+
+      const rawJson = response.choices[0]?.message?.content;
+
+      if (!rawJson) throw new Error('Empty response from OpenRouter');
+
+      let parsed: unknown;
+
+      try {
+        parsed = JSON.parse(rawJson);
+      } catch {
+        throw new Error(
+          `OpenRouter returned invalid JSON: ${rawJson.substring(0, 200)}`,
+        );
+      }
+
+      const result = ReviewResultSchema.safeParse(parsed);
+
+      if (!result.success) {
+        this.logger.error(
+          { errors: result.error.format() },
+          'LLM response schema mismatch',
+        );
+        throw new Error('LLM response did not match expected schema');
+      }
+
+      return result.data;
+    } catch (error) {
+       if (error instanceof OpenAI.APIError) {
+        const status = error?.status;
+        const openRouterError = error?.error || error;
+
+        this.logger.error(
+          { status, openRouterError, message: openRouterError?.message },
+          '🔴 OpenRouter API error details',
+        );
+
+        if (status === 429) {
+          // ✅ Parse the wait time OpenRouter gives you and wait before throwing
+          // so BullMQ retries after the right delay
+          const waitMs =  5000;
+
+          this.logger.warn(
+            { waitMs },
+            '⏳ Rate limited — waiting before retry',
+          );
+          await new Promise((resolve) => setTimeout(resolve, waitMs));
+
+          throw new Error(`OpenRouter rate limit — retrying after ${waitMs}ms`);
+        }
+
+        if (status === 401) throw new Error('Invalid OpenRouter API key.');
+      }
+      throw error;
+    }
+  }
+}

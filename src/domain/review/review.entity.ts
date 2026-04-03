@@ -4,9 +4,11 @@ import {
   Entity,
   JoinColumn,
   ManyToOne,
+  OneToMany,
   PrimaryGeneratedColumn,
 } from 'typeorm';
 import { PullRequest } from '../pull-request.entity';
+import { ReviewIssue } from '../review-issue.entity';
 
 @Entity('reviews')
 export class Review {
@@ -19,6 +21,9 @@ export class Review {
   @ManyToOne(() => PullRequest)
   @JoinColumn({ name: 'pull_request_id' })
   pullRequest: PullRequest;
+
+  @OneToMany(() => ReviewIssue, (issue) => issue.review)
+  issues: ReviewIssue[];
 
   @Column()
   head_commit_sha: string;

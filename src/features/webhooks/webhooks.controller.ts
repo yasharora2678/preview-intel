@@ -11,6 +11,7 @@ import {
 import { GithubWebhookGuard } from 'src/features/webhooks/guards/github-webhook.guard';
 import { WebHooksHandler } from './webhooks.service';
 import { Response } from 'express';
+import { Public } from 'src/infrastructure/decorators/public.decorator';
 
 @Controller({ path: 'webhooks/github', version: '1' })
 export class WebhooksController {
@@ -19,6 +20,7 @@ export class WebhooksController {
   constructor(private readonly handler: WebHooksHandler) {}
 
   @Post()
+  @Public()
   @UseGuards(GithubWebhookGuard)
   public async handle(
     @Headers('x-github-event') eventType: string,
@@ -26,11 +28,11 @@ export class WebhooksController {
     @Body() payload: any,
     @Res() res: Response,
   ) {
+    res
+      .status(HttpStatus.OK)
+      .json({ message: 'Webhook events handled successfully' });
     this.logger.log({ eventType, deliveryId }, 'Received GitHub webhook');
 
-    await this.handler.handle(eventType, deliveryId, payload);
-    return res
-      .status(HttpStatus.OK)
-      .json({ message: 'Webhook events handeled successfully' });
+    this.handler.handle(eventType, deliveryId, payload);
   }
 }

@@ -6,11 +6,10 @@ import { ReviewsService } from './reviews.service';
 import { PaginationDto } from 'src/infrastructure/dto/pagination.dto';
 import { User } from 'src/domain/user.entity';
 import { CurrentUser } from 'src/infrastructure/decorators/current-user.decorator';
-import { AuthGuard } from '@nestjs/passport';
+import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 
-
-@Controller('v1')
-@UseGuards(AuthGuard('github'))
+@Controller({version: '1'})
+@UseGuards(JwtAuthGuard)
 export class ReviewsController {
   constructor(private readonly reviewsService: ReviewsService) {}
 

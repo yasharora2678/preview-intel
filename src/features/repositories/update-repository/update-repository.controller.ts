@@ -1,14 +1,17 @@
 import {
   Controller, Get, Patch, Post, Param,
   Body, ParseUUIDPipe,
+  UseGuards,
 } from '@nestjs/common';
 import { RepositoriesService } from './update-repository.service';
 import { CurrentUser } from 'src/infrastructure/decorators/current-user.decorator';
 import { User } from 'src/domain/user.entity';
 import { UpdateRepositoryDto } from './update-repository.dto';
+import { JwtAuthGuard } from 'src/features/auth/guards/jwt-auth.guard';
 
 
-@Controller('v1/repositories')
+@Controller({path : 'repositories' , version: '1'})
+@UseGuards(JwtAuthGuard)
 export class RepositoriesController {
   constructor(private readonly repoService: RepositoriesService) {}
 

@@ -1,5 +1,4 @@
 import { QueryHandler, IQueryHandler } from '@nestjs/cqrs';
-import { InjectRepository } from '@nestjs/typeorm';
 import { NotFoundException } from '@nestjs/common';
 import { GetReviewDetailQuery } from '../../queries/get-review-detail.query';
 import { CacheService } from 'src/infrastructure/cache/cache.service';
@@ -11,7 +10,6 @@ export class GetReviewDetailHandler
   implements IQueryHandler<GetReviewDetailQuery>
 {
   constructor(
-    @InjectRepository(ReviewsRepository)
     private readonly reviewsRepository: ReviewsRepository,
     private readonly cacheService: CacheService,
   ) {}

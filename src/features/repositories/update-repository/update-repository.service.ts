@@ -1,15 +1,13 @@
 import {
   Injectable, NotFoundException, Logger,
+  ForbiddenException,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository as RepoEntity } from 'src/domain/repository.entity';
 import { User } from 'src/domain/user.entity';
 import { CacheService } from 'src/infrastructure/cache/cache.service';
 import { GithubRepository } from 'src/infrastructure/repositories/repositories.repository';
-import { Repository } from 'typeorm';
 import { UpdateRepositoryDto } from './update-repository.dto';
-import { InstallationRepository } from 'src/infrastructure/repositories/installation.repository';
-
 
 @Injectable()
 export class RepositoriesService {
@@ -18,18 +16,16 @@ export class RepositoriesService {
   constructor(
     @InjectRepository(GithubRepository)
     private readonly githubRepository: GithubRepository,
-    // @InjectRepository(InstallationRepository)
-    // private readonly installationRepo: InstallationRepository,
     private readonly cacheService: CacheService,
   ) {}
 
   async findAllForUser(user: User): Promise<RepoEntity[]> {
-    // if (user.isAdmin) {
-    //   return this.githubRepository.find({
-    //     relations: ['installation'],
-    //     order: { created_at: 'DESC' },
-    //   });
-    // }
+    if (user.is_admin) {
+      return this.githubRepository.find({
+        relations: ['installation'],
+        order: { created_at: 'DESC' },
+      });
+    }
 
     // Regular users only see repos from their own installations
     return this.githubRepository
@@ -37,7 +33,7 @@ export class RepositoriesService {
       .innerJoin('repo.installation', 'installation')
       .where('installation.user_id = :userId', { userId: user.id })
       .andWhere('installation.is_active = true')
-      .orderBy('repo.createdAt', 'DESC')
+      .orderBy('repo.created_at', 'DESC')
       .getMany();
   }
 
@@ -52,9 +48,9 @@ export class RepositoriesService {
     }
 
     // Authorization: admin sees all, regular users see only their own
-    // if (!user.isAdmin && repo.installation.userId !== user.id) {
-    //   throw new ForbiddenException('You do not have access to this repository');
-    // }
+    if (!user.is_admin && repo.installation.user_id !== user.id) {
+      throw new ForbiddenException('You do not have access to this repository');
+    }
 
     return repo;
   }

@@ -18,7 +18,7 @@ const COOKIE_OPTIONS = {
   path: '/api/v1/auth',  // Restrict cookie to auth routes only
 };
 
-@Controller('v1/auth')
+@Controller({path: 'auth', version: '1'})
 export class AuthController {
   private readonly logger = new Logger(AuthController.name);
 
@@ -108,7 +108,7 @@ export class AuthController {
         username: user.github_username,
         avatarUrl: user.github_avatar_url,
         // email: user.email,
-        // isAdmin: user.isAdmin,
+        isAdmin: user.is_admin,
       },
     };
   }

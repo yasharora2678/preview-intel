@@ -1,5 +1,4 @@
 import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
-import { InjectRepository } from '@nestjs/typeorm';
 import { CreateReviewCommand } from '../../commands/create-review.command';
 import { Review } from 'src/domain/review/review.entity';
 import { ReviewStatus } from 'src/domain/review/review-status.enum';
@@ -9,7 +8,6 @@ import { ReviewsRepository } from 'src/infrastructure/repositories/review-reposi
 @CommandHandler(CreateReviewCommand)
 export class CreateReviewHandler implements ICommandHandler<CreateReviewCommand> {
   constructor(
-    @InjectRepository(ReviewsRepository)
     private readonly reviewsRepository: ReviewsRepository,
   ) {}
 
