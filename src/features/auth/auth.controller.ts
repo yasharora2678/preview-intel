@@ -107,7 +107,7 @@ export class AuthController {
         githubId: user.github_id,
         username: user.github_username,
         avatarUrl: user.github_avatar_url,
-        // email: user.email,
+        email: user.email,
         isAdmin: user.is_admin,
       },
     };

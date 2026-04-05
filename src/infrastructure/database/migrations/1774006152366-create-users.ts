@@ -18,6 +18,7 @@ export class CreateUsers1774006152366 implements MigrationInterface {
           { name: 'github_avatar_url', type: 'text', isNullable: true },
           { name: 'is_admin', type: 'boolean', default: false },
           { name: 'created_at', type: 'timestamptz', default: 'now()' },
+          { name: 'updated_at', type: 'timestamptz', default: 'now()' },
         ],
       }),
     );

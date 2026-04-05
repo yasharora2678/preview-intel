@@ -26,6 +26,7 @@ export class CreateInstallations1774006201890 implements MigrationInterface {
           { name: 'llm_api_key_encrypted', type: 'text', isNullable: true },
           { name: 'is_active', type: 'boolean', default: true },
           { name: 'created_at', type: 'timestamptz', default: 'now()' },
+          { name: 'updated_at', type: 'timestamptz', default: 'now()' },
         ],
       }),
     );

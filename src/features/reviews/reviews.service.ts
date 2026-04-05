@@ -19,6 +19,7 @@ import { ReviewResult } from '../../domain/review/review-provider.interface';
 import { ReviewIssueRepository } from 'src/infrastructure/repositories/review-issue.repository';
 import { InjectQueue } from '@nestjs/bullmq';
 import { Queue } from 'bullmq';
+import * as crypto from 'crypto';
 
 @Injectable()
 export class ReviewsService {
@@ -63,9 +64,6 @@ export class ReviewsService {
     return review;
   }
 
-  /**
-   * Trigger a fresh re-review for a PR (manual trigger from dashboard)
-   */
   async triggerRereview(
     reviewId: string,
     user: User,
@@ -79,36 +77,52 @@ export class ReviewsService {
       ],
     });
 
-    if (!review) {
-      throw new NotFoundException('Review not found');
-    }
+    if (!review) throw new NotFoundException('Review not found');
 
     const repo = review.pullRequest.repository;
     await this.verifyRepoAccess(repo.id, user);
 
     const pr = review.pullRequest;
-    const jobData: PrReviewJobData = {
-      installationId: repo.installation.github_installation_id,
-      repositoryId: repo.id,
-      githubRepoId: repo.github_repo_id,
-      repoFullName: repo.full_name,
-      prNumber: pr.github_pr_number,
-      prTitle: pr.title,
-      headCommitSha: pr.head_commit_sha,
-      baseBranch: pr.base_branch,
-      headBranch: pr.head_branch,
-      authorLogin: pr.author_login,
-      githubPrUrl: pr.github_pr_url,
-      action: 'reopened',
-    };
 
-    const job = await this.queue.add('review-pr', jobData, {
-      priority: JobPriority.HIGH,
-    });
+    // Use the same jobId scheme as the outbox poller — dedup handles duplicates
+    const jobId = crypto
+      .createHash('md5')
+      .update(
+        `${repo.github_repo_id}:${pr.github_pr_number}:${pr.head_commit_sha}:rereview`,
+      )
+      .digest('hex');
 
-    this.logger.log({ jobId: job.id, reviewId }, 'Manual re-review queued');
+    await this.queue.add(
+      'review-pr',
+      {
+        installationId: repo.installation.github_installation_id,
+        repositoryId: repo.id,
+        githubRepoId: repo.github_repo_id,
+        repoFullName: repo.full_name,
+        prNumber: pr.github_pr_number,
+        prTitle: pr.title,
+        headCommitSha: pr.head_commit_sha,
+        baseBranch: pr.base_branch,
+        headBranch: pr.head_branch,
+        authorLogin: pr.author_login,
+        githubPrUrl: pr.github_pr_url,
+        action: 'reopened', // treated as NORMAL priority
+        outboxEventId: `rereview-${reviewId}`,
+      },
+      { jobId, priority: 5 },
+    );
 
-    return { jobId: job.id };
+    this.logger.log(
+      {
+        reviewId,
+        jobId,
+        prNumber: pr.github_pr_number,
+        triggeredBy: user.github_username,
+      },
+      'Re-review enqueued',
+    );
+
+    return { jobId };
   }
 
   async getPullRequestReviews(prId: string, user: User) {

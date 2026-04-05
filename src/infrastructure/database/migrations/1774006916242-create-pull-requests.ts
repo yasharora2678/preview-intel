@@ -4,6 +4,7 @@ import {
   Table,
   TableForeignKey,
   TableIndex,
+  TableUnique,
 } from 'typeorm';
 
 export class CreatePullRequests1774006916242 implements MigrationInterface {
@@ -35,10 +36,10 @@ export class CreatePullRequests1774006916242 implements MigrationInterface {
       }),
     );
 
-    await queryRunner.createIndex(
+    await queryRunner.createUniqueConstraint(
       'pull_requests',
-      new TableIndex({
-        name: 'idx_pr_repo_id_pr_number',
+      new TableUnique({
+        name: 'uq_pull_requests_repo_pr_number',
         columnNames: ['repository_id', 'github_pr_number'],
       }),
     );
@@ -60,7 +61,7 @@ export class CreatePullRequests1774006916242 implements MigrationInterface {
       'pull_requests',
       'fk_pull_requests_repository_id',
     );
-    await queryRunner.dropIndex('pull_requests' , 'idx_pr_repo_id_pr_number');
+    await queryRunner.dropUniqueConstraint('pull_requests', 'uq_pull_requests_repo_pr_number');
     await queryRunner.dropTable('pull_requests');
   }
 }

@@ -11,6 +11,13 @@ import { OutBoxStatus } from 'src/domain/outbox-message/enums/outbox-message.enu
 import { LessThanOrEqual } from 'typeorm';
 import { CacheService } from 'src/infrastructure/cache/cache.service';
 
+const priorityMap: Record<string, number> = {
+  review_requested: JobPriority.HIGH,
+  opened:           JobPriority.NORMAL,
+  reopened:         JobPriority.NORMAL,
+  synchronize:      JobPriority.LOW,
+};
+
 @Injectable()
 export class OutboxPollerService implements OnModuleDestroy {
   private readonly logger = new Logger(OutboxPollerService.name);
@@ -57,8 +64,7 @@ export class OutboxPollerService implements OnModuleDestroy {
         )
         .digest('hex');
 
-      const priority =
-        payload.action === 'synchronize' ? JobPriority.LOW : JobPriority.NORMAL;
+      const priority = priorityMap[payload.action] ?? JobPriority.NORMAL;
 
       // If synchronize: remove old job for this PR first
       if (payload.action === 'synchronize') {
@@ -96,7 +102,7 @@ export class OutboxPollerService implements OnModuleDestroy {
       outboxMessage.markAsSent();
 
       this.logger.log(
-        { jobId, prNumber: payload.prNumber, repo: payload.repoFullName },
+        { jobId, prNumber: payload.prNumber, repo: payload.repoFullName, traceId: payload.traceId },
         'Published to queue',
       );
 

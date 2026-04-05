@@ -25,15 +25,21 @@ You MUST respond with ONLY a valid JSON object matching this exact schema:
   "issues": [{
     "type": "bug|security|style|performance|test",
     "severity": "critical|warning|suggestion",
-    "file": "path/to/file",
-    "line": <number or null>,
+    "file": "REQUIRED - always use the exact filename from the changed files list above. Never null.",
+    "line": <line number where the issue occurs, or null ONLY if the issue applies to the entire file and has no single location>,
     "description": "what is wrong",
     "suggestion": "how to fix it"
   }],
   "positives": ["thing done well"],
   "missing_tests": <boolean>,
   "breaking_change": <boolean>
-}`;
+}
+
+STRICT RULES:
+- "file" is ALWAYS required. Use the exact filename from the PR diff (e.g. "src/app.module.ts").
+- Never use null for "file". If unsure, use the most relevant file from the changed files.
+- "line" should be a specific line number whenever possible. Use null ONLY for file-level observations with no single location (e.g. "this file lacks error handling throughout"). For style issues, use the line of the first occurrence.
+- Do not include any explanation outside the JSON object.`;
 
 @Injectable()
 export class HuggingFaceProvider implements ReviewProvider {
@@ -51,9 +57,15 @@ export class HuggingFaceProvider implements ReviewProvider {
     this.API_KEY = apiKey;
   }
 
-  getName(): string { return 'huggingface'; }
-  getModel(): string { return this.MODEL; }
-  estimateTokens(text: string): number { return Math.ceil(text.length / 4); }
+  getName(): string {
+    return 'huggingface';
+  }
+  getModel(): string {
+    return this.MODEL;
+  }
+  estimateTokens(text: string): number {
+    return Math.ceil(text.length / 4);
+  }
 
   private buildUserPrompt(diff: DiffInput): string {
     const filesSection = diff.files
@@ -119,7 +131,10 @@ Review the above pull request and respond with JSON only.`;
 
     const validated = ReviewResultSchema.safeParse(parsed);
     if (!validated.success) {
-      this.logger.error({ errors: validated.error.format() }, 'LLM response schema mismatch');
+      this.logger.error(
+        { errors: validated.error.format() },
+        'LLM response schema mismatch',
+      );
       throw new Error('LLM response did not match expected schema');
     }
 

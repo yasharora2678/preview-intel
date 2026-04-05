@@ -45,6 +45,14 @@ export class CreateReviews1774006970457 implements MigrationInterface {
       }),
     );
 
+    await queryRunner.createIndex(
+      'reviews',
+      new TableIndex({
+        name: 'idx_reviews_created_at_desc',
+        columnNames: ['created_at'],
+      }),
+    );
+
     await queryRunner.createForeignKey(
       'reviews',
       new TableForeignKey({
@@ -59,6 +67,7 @@ export class CreateReviews1774006970457 implements MigrationInterface {
 
   public async down(queryRunner: QueryRunner): Promise<void> {
     await queryRunner.dropIndex('reviews', 'idx_reviews_pull_request_id');
+    await queryRunner.dropIndex('reviews', 'idx_reviews_created_at_desc');
     await queryRunner.dropForeignKey('reviews', 'fk_reviews_pull_request_id');
     await queryRunner.dropTable('reviews');
   }

@@ -15,11 +15,17 @@ import { ReviewModule } from './features/reviews/reviews.module';
 import { GithubAppModule } from './infrastructure/github/github-app.module';
 import { UpdateRepositoryModule } from './features/repositories/update-repository/update-repository.module';
 import { ProcessorModule } from './infrastructure/processors/pr-review-processor/pr-review-processor.module';
+import { GetInstallationModule } from './features/installations/get-installation/get-installation.module';
+import { SharedModule } from './shared/shared.module';
+import { HealthModule } from './features/health/health.module';
+import { CreateInstallationModule } from './features/installations/create-installation/create-installation.module';
+import { AddApiKeyToInstallationsModule } from './features/installations/add-api-key-to-installation/add-api-key-to-installation.module';
 
 @Module({
   imports: [
     ConfigModule.forRoot({ isGlobal: true }),
     ScheduleModule.forRoot(),
+    SharedModule,
     DatabaseModule,
     WebhooksModule,
     OutboxPollerModule,
@@ -31,6 +37,10 @@ import { ProcessorModule } from './infrastructure/processors/pr-review-processor
     ReviewModule,
     ProcessorModule,
     UpdateRepositoryModule,
+    HealthModule,
+    GetInstallationModule,
+    CreateInstallationModule,
+    AddApiKeyToInstallationsModule,
     LoggerModule.forRoot({
       pinoHttp: {
         level: process.env.NODE_ENV === 'production' ? 'info' : 'debug',

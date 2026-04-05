@@ -11,6 +11,7 @@ export interface PrReviewJobData {
   authorLogin: string;
   githubPrUrl: string;
   action: 'opened' | 'synchronize' | 'reopened';
+  traceId: string;
 }
 
 export enum JobPriority {

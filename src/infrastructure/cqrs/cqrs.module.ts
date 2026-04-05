@@ -11,6 +11,9 @@ import { GetRepositoryReviewsHandler } from './handlers/queries/get-repository-r
 import { GetReviewDetailHandler } from './handlers/queries/get-review-detail.handler';
 import { ReviewsRepository } from '../repositories/review-repository';
 import { ReviewIssueRepository } from '../repositories/review-issue.repository';
+import { GetScoreTrendHandler } from './handlers/queries/get-score-trend.handler';
+import { GetIssueDistributionHandler } from './handlers/queries/get-issue-distribution.handler';
+import { GetAuthorStatsHandler } from './handlers/queries/get-author-stats.handler';
 
 const CommandHandlers = [
   CreateReviewHandler,
@@ -18,7 +21,13 @@ const CommandHandlers = [
   SaveReviewIssuesHandler,
 ];
 
-const QueryHandlers = [GetRepositoryReviewsHandler, GetReviewDetailHandler];
+const QueryHandlers = [
+  GetRepositoryReviewsHandler,
+  GetReviewDetailHandler,
+  GetScoreTrendHandler,
+  GetIssueDistributionHandler,
+  GetAuthorStatsHandler,
+];
 
 @Module({
   imports: [NestCqrsModule],
@@ -30,5 +39,4 @@ const QueryHandlers = [GetRepositoryReviewsHandler, GetReviewDetailHandler];
   ],
   exports: [NestCqrsModule],
 })
-
 export class AppCqrsModule {}

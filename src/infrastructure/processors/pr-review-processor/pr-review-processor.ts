@@ -12,6 +12,7 @@ import { ReviewsService } from 'src/features/reviews/reviews.service';
 import { GithubClientService } from 'src/infrastructure/github/github-client.service';
 import { GithubCommentService } from 'src/infrastructure/github/github-comment.service';
 import { PrReviewJobData } from 'src/shared/pr-review-job-data';
+import { CacheService } from 'src/infrastructure/cache/cache.service';
 
 @Processor('pr-review', {
   concurrency: 5,
@@ -25,6 +26,7 @@ export class PrReviewProcessor extends WorkerHost {
     private readonly reviewService: ReviewsService,
     private readonly commentService: GithubCommentService,
     private readonly providerFactory: LlmProviderFactory,
+    private readonly cacheService: CacheService,
   ) {
     super();
   }
@@ -32,7 +34,7 @@ export class PrReviewProcessor extends WorkerHost {
   async process(job: Job<PrReviewJobData>, token?: string): Promise<void> {
     const { data } = job;
     this.logger.log(
-      { jobId: job.id, pr: data.prNumber },
+      { jobId: job.id, pr: data.prNumber, traceId: data.traceId },
       '🔄 Processing PR review job',
     );
 
@@ -58,12 +60,14 @@ export class PrReviewProcessor extends WorkerHost {
         return;
       }
 
+      await this.checkRateLimits(data);
+
       // 4. Get the configured LLM provider for this installation
       const provider = await this.providerFactory.getForInstallation(
         data.installationId,
       );
 
-    //   // 5. Call LLM (with circuit breaker) — merge chunks if multiple
+      //   // 5. Call LLM (with circuit breaker) — merge chunks if multiple
       const results = await Promise.all(
         diffChunks.map((chunk) => this.circuitBreaker.review(provider, chunk)),
       );
@@ -95,10 +99,7 @@ export class PrReviewProcessor extends WorkerHost {
       }
 
       // 8. Update commit status check
-      const statusState =
-        mergedResult.score >= 70
-          ? 'success'
-          : 'failure';
+      const statusState = mergedResult.score >= 70 ? 'success' : 'failure';
 
       await this.commentService.postStatusCheck(
         data,
@@ -107,7 +108,7 @@ export class PrReviewProcessor extends WorkerHost {
       );
 
       this.logger.log(
-        { pr: data.prNumber, score: mergedResult.score },
+        { pr: data.prNumber, score: mergedResult.score, traceId: data.traceId },
         '✅ PR review completed',
       );
     } catch (err) {
@@ -140,6 +141,32 @@ export class PrReviewProcessor extends WorkerHost {
       missing_tests: results.some((r) => r.missing_tests),
       breaking_change: results.some((r) => r.breaking_change),
     };
+  }
+
+  private async checkRateLimits(data: PrReviewJobData): Promise<void> {
+    const redis = (this.cacheService as any).redis;
+
+    // Limit 1: 5 LLM calls per installation per minute
+    const instKey = `rate:installation:${data.installationId}:${Math.floor(Date.now() / 60_000)}`;
+    const instCount = await redis.incr(instKey);
+    if (instCount === 1) await redis.expire(instKey, 60);
+
+    if (instCount > 5) {
+      throw new Error(
+        `Installation rate limit exceeded (${instCount}/5 per minute) — will retry`,
+      );
+    }
+
+    // Limit 2: 20 reviews per repo per hour
+    const repoKey = `rate:repo:${data.repositoryId}:${Math.floor(Date.now() / 3_600_000)}`;
+    const repoCount = await redis.incr(repoKey);
+    if (repoCount === 1) await redis.expire(repoKey, 3600);
+
+    if (repoCount > 20) {
+      throw new Error(
+        `Repository rate limit exceeded (${repoCount}/20 per hour) — will retry`,
+      );
+    }
   }
 
   @OnWorkerEvent('failed')

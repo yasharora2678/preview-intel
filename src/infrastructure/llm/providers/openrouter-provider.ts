@@ -26,7 +26,7 @@ You MUST respond with ONLY a valid JSON object matching this exact schema:
     "type": "bug|security|style|performance|test",
     "severity": "critical|warning|suggestion",
     "file": "REQUIRED - always use the exact filename from the changed files list above. Never null.",
-    "line": <number or null>,
+    "line": <line number where the issue occurs, or null ONLY if the issue applies to the entire file and has no single location>,
     "description": "what is wrong",
     "suggestion": "how to fix it"
   }],
@@ -38,6 +38,7 @@ You MUST respond with ONLY a valid JSON object matching this exact schema:
 STRICT RULES:
 - "file" is ALWAYS required. Use the exact filename from the PR diff (e.g. "src/app.module.ts").
 - Never use null for "file". If unsure, use the most relevant file from the changed files.
+- "line" should be a specific line number whenever possible. Use null ONLY for file-level observations with no single location (e.g. "this file lacks error handling throughout"). For style issues, use the line of the first occurrence.
 - Do not include any explanation outside the JSON object.`;
 
 @Injectable()
@@ -140,7 +141,7 @@ Review the above pull request and respond with the JSON schema only.`;
 
       return result.data;
     } catch (error) {
-       if (error instanceof OpenAI.APIError) {
+      if (error instanceof OpenAI.APIError) {
         const status = error?.status;
         const openRouterError = error?.error || error;
 
@@ -152,7 +153,7 @@ Review the above pull request and respond with the JSON schema only.`;
         if (status === 429) {
           // ✅ Parse the wait time OpenRouter gives you and wait before throwing
           // so BullMQ retries after the right delay
-          const waitMs =  5000;
+          const waitMs = 5000;
 
           this.logger.warn(
             { waitMs },

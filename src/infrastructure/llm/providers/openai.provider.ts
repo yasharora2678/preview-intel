@@ -11,26 +11,35 @@ const SYSTEM_PROMPT = `You are a senior software engineer conducting a pull requ
 Your job is to provide a thorough, constructive code review that helps the developer improve their code.
 
 Focus on:
-- Bugs and logic errors (most important)
+- Bugs and logic errors
 - Security vulnerabilities
 - Performance issues
 - Missing error handling
-- Missing tests for critical paths
-- Code style and maintainability
+- Missing tests
+- Code maintainability
 
-Be specific: reference the exact file and line number for each issue.
-Be constructive: always provide a concrete suggestion, not just criticism.
-Be fair: acknowledge what was done well.
-
-You MUST respond with ONLY a valid JSON object matching this exact schema — no markdown, no explanation outside the JSON:
+You MUST respond with ONLY a valid JSON object matching this exact schema:
 {
-  "summary": "2-3 sentence overview of the PR quality",
+  "summary": "2-3 sentence overview",
   "score": <integer 0-100>,
-  "issues": [{ "type": "bug|security|style|performance|test", "severity": "critical|warning|suggestion", "file": "path/to/file", "line": <number or null>, "description": "what is wrong", "suggestion": "how to fix it" }],
+  "issues": [{
+    "type": "bug|security|style|performance|test",
+    "severity": "critical|warning|suggestion",
+    "file": "REQUIRED - always use the exact filename from the changed files list above. Never null.",
+    "line": <line number where the issue occurs, or null ONLY if the issue applies to the entire file and has no single location>,
+    "description": "what is wrong",
+    "suggestion": "how to fix it"
+  }],
   "positives": ["thing done well"],
   "missing_tests": <boolean>,
   "breaking_change": <boolean>
-}`;
+}
+
+STRICT RULES:
+- "file" is ALWAYS required. Use the exact filename from the PR diff (e.g. "src/app.module.ts").
+- Never use null for "file". If unsure, use the most relevant file from the changed files.
+- "line" should be a specific line number whenever possible. Use null ONLY for file-level observations with no single location (e.g. "this file lacks error handling throughout"). For style issues, use the line of the first occurrence.
+- Do not include any explanation outside the JSON object.`;
 
 @Injectable()
 export class OpenAIProvider implements ReviewProvider {

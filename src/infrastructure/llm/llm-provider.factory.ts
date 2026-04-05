@@ -7,6 +7,7 @@ import { ReviewProvider } from '../../domain/review/review-provider.interface';
 import { InstallationRepository } from 'src/infrastructure/repositories/installation.repository';
 import { HuggingFaceProvider } from './providers/hugging-face.provider';
 import { OpenRouterProvider } from './providers/openrouter-provider';
+import { EncryptionService } from 'src/shared/encryption-service';
 
 @Injectable()
 export class LlmProviderFactory {
@@ -15,6 +16,7 @@ export class LlmProviderFactory {
   constructor(
     private readonly config: ConfigService,
     private readonly installationRepository: InstallationRepository,
+    private readonly encryptionService: EncryptionService
   ) {}
 
   /**
@@ -34,7 +36,7 @@ export class LlmProviderFactory {
 
     // Decrypt per-installation key, or fall back to global env key
     const apiKey = encryptedKey
-      ? this.decryptKey(encryptedKey)
+      ? this.encryptionService.decrypt(encryptedKey)
       : this.getGlobalKey(provider);
 
     this.logger.debug(
@@ -72,25 +74,5 @@ export class LlmProviderFactory {
     if (!key)
       throw new Error(`No API key configured for provider: ${provider}`);
     return key;
-  }
-
-  private decryptKey(encryptedKey: string): string {
-    const encryptionKey = this.config.get<string>('ENCRYPTION_KEY')!;
-    const keyBuffer = Buffer.from(encryptionKey, 'hex');
-
-    // Format: iv:authTag:encrypted (all hex)
-    const [ivHex, authTagHex, encryptedHex] = encryptedKey.split(':');
-    const iv = Buffer.from(ivHex, 'hex');
-    const authTag = Buffer.from(authTagHex, 'hex');
-    const encrypted = Buffer.from(encryptedHex, 'hex');
-
-    const decipher = crypto.createDecipheriv('aes-256-gcm', keyBuffer, iv);
-    decipher.setAuthTag(authTag);
-
-    const decrypted = Buffer.concat([
-      decipher.update(encrypted),
-      decipher.final(),
-    ]);
-    return decrypted.toString('utf8');
   }
 }

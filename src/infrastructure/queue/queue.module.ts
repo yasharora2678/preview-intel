@@ -4,6 +4,7 @@ import { BullModule } from '@nestjs/bullmq';
 import { Module } from '@nestjs/common';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { BullMQAdapter } from '@bull-board/api/bullMQAdapter'; 
+import { DlqAlertService } from './dlq-alert-service';
 
 @Module({
   imports: [
@@ -38,6 +39,9 @@ import { BullMQAdapter } from '@bull-board/api/bullMQAdapter';
       name: 'pr-review',
       adapter: BullMQAdapter,
     }),
+  ],
+  providers: [
+    DlqAlertService
   ],
   exports: [BullModule],
 })

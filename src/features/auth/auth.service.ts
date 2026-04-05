@@ -12,6 +12,7 @@ interface FindOrCreateUserDto {
   githubId: number;
   githubUsername: string;
   githubAvatarUrl?: string;
+  email?: string; 
 //   githubAccessToken: string;
 }
 
@@ -42,6 +43,7 @@ export class AuthService {
         github_id: dto.githubId,
         github_username: dto.githubUsername,
         github_avatar_url: dto.githubAvatarUrl,
+        email: dto.email ?? null,
       });
       await this.userRepo.save(user);
     } else {
@@ -49,6 +51,7 @@ export class AuthService {
       await this.userRepo.update(user.id, {
         github_username: dto.githubUsername,
         github_avatar_url: dto.githubAvatarUrl,
+        ...(dto.email && { email: dto.email }),
       });
     }
 
