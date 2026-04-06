@@ -149,6 +149,7 @@ export class ReviewsService {
       relations: ['installation'],
     });
 
+
     if (!repo) throw new NotFoundException('Repository not found');
 
     if (repo.installation.user_id !== user.id) {

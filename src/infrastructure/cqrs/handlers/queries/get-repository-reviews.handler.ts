@@ -40,14 +40,8 @@ export class GetRepositoryReviewsHandler
         'pr.author_login',
         'pr.github_pr_url',
       ])
-      .addSelect(
-        (sub) =>
-          sub
-            .select('COUNT(*)', 'issue_count')
-            .from('review_issues', 'ri')
-            .where('ri.review_id = review.id'),
-        'review_issue_count',
-      )
+      .loadRelationCountAndMap('review.issueCount', 'review.issues')
+      // FIX 1: snake_case for orderBy
       .orderBy('review.created_at', 'DESC')
       .skip((query.page - 1) * query.limit)
       .take(query.limit);
@@ -58,10 +52,10 @@ export class GetRepositoryReviewsHandler
         author: query.filters.authorLogin,
       });
     }
-    if (query.filters?.minScore !== undefined) {
+    if (query.filters?.minScore !== undefined && !isNaN(query.filters.minScore)) {
       qb.andWhere('review.score >= :minScore', { minScore: query.filters.minScore });
     }
-    if (query.filters?.maxScore !== undefined) {
+    if (query.filters?.maxScore !== undefined && !isNaN(query.filters.maxScore)) {
       qb.andWhere('review.score <= :maxScore', { maxScore: query.filters.maxScore });
     }
     if (query.filters?.dateFrom) {
@@ -71,11 +65,10 @@ export class GetRepositoryReviewsHandler
       qb.andWhere('review.created_at <= :dateTo', { dateTo: query.filters.dateTo });
     }
 
+    // getManyAndCount() now works correctly — no correlated subquery conflict
     const [items, total] = await qb.getManyAndCount();
 
     const result = { items, total, page: query.page, limit: query.limit };
-
-    // Cache for 2 minutes (reviews change frequently)
     await this.cacheService.set(cacheKey, result, 120);
 
     return result;

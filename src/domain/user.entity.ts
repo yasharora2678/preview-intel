@@ -25,7 +25,7 @@ export class User {
   @Column({ default: false })
   is_admin: boolean;
 
-  @Column({ type: 'varchar', length: 255, nullable: true })  // ADD
+  @Column({ type: 'varchar', length: 255, nullable: true, unique: true })  // ADD
   email: string | null;
 
   @CreateDateColumn({ type: 'timestamptz' })

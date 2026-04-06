@@ -10,6 +10,7 @@ import { JwtAuthGuard } from './guards/jwt-auth.guard';
 import { UserRepository } from 'src/infrastructure/repositories/user-repository';
 import { RefreshTokenRepository } from 'src/infrastructure/repositories/refresh-token.repository';
 import { IsAdminGuard } from './guards/is-admin.guard';
+import { InstallationRepository } from 'src/infrastructure/repositories/installation.repository';
 
 @Module({
   imports: [
@@ -17,17 +18,18 @@ import { IsAdminGuard } from './guards/is-admin.guard';
     JwtModule.registerAsync({
       imports: [ConfigModule],
       inject: [ConfigService],
-      useFactory: (config: ConfigService) => ({
-        // RS256: sign with PRIVATE key, verify with PUBLIC key
-        privateKey: config
-          .get<string>('JWT_PRIVATE_KEY')!
-          .replace(/\\n/g, '\n'),
-        publicKey: config.get<string>('JWT_PUBLIC_KEY')!.replace(/\\n/g, '\n'),
-        signOptions: {
-          algorithm: 'RS256',
-          expiresIn: '15m',
-        },
-      }),
+      useFactory: (config: ConfigService) => {
+        const parseKey = (key: string) => key.replace(/\\n/g, '\n');
+
+        return {
+          privateKey: parseKey(config.get<string>('JWT_PRIVATE_KEY')!),
+          publicKey: parseKey(config.get<string>('JWT_PUBLIC_KEY')!),
+          signOptions: {
+            algorithm: 'RS256',
+            expiresIn: '15m',
+          },
+        };
+      },
     }),
   ],
   controllers: [AuthController],
@@ -39,7 +41,8 @@ import { IsAdminGuard } from './guards/is-admin.guard';
     UserRepository,
     RefreshTokenRepository,
     IsAdminGuard,
+    InstallationRepository
   ],
-  exports: [AuthService, JwtAuthGuard, UserRepository, IsAdminGuard],
+  exports: [AuthService, JwtAuthGuard, UserRepository, IsAdminGuard, InstallationRepository],
 })
 export class AuthModule {}

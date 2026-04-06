@@ -6,7 +6,10 @@ import { urlencoded } from 'express';
 import { ValidationError } from 'class-validator';
 import { DtoValidation } from './infrastructure/http/exceptions/exceptions';
 import { Logger } from 'nestjs-pino';
-import { addTransactionalDataSource, initializeTransactionalContext } from 'typeorm-transactional';
+import {
+  addTransactionalDataSource,
+  initializeTransactionalContext,
+} from 'typeorm-transactional';
 import { DataSource } from 'typeorm';
 import cookieParser from 'cookie-parser';
 import { AllExceptionsFilter } from './infrastructure/http/exceptions/all-exception-filter';
@@ -29,7 +32,11 @@ async function bootstrap() {
   app.use(cookieParser());
   app.useGlobalFilters(new AllExceptionsFilter(httpAdapter));
   app.useGlobalInterceptors(new ResponseEnvelopeInterceptor());
-  app.enableCors();
+  app.enableCors({
+    origin: ['http://localhost:3002', 'https://yourfrontend.com'],
+    methods: 'GET,HEAD,PUT,PATCH,POST,DELETE',
+    credentials: true,
+  });
   app.useLogger(app.get(Logger));
   app.use(urlencoded({ extended: true, limit: '50mb' }));
   app.useGlobalPipes(

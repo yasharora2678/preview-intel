@@ -100,7 +100,9 @@ export class AuthController {
 
   // Return the currently authenticated user's profile
   @Get('me')
+  @UseGuards(AuthGuard('jwt'))
   async getMe(@CurrentUser() user: User) {
+    console.log(user, "User")
     return {
       data: {
         id: user.id,

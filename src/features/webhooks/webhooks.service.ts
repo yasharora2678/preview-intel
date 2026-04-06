@@ -137,6 +137,7 @@ export class WebHooksHandler {
           llm_provider: 'groq',
           is_active: true,
           user_id: user?.id ?? null, // linked if user exists, null otherwise
+          sender_github_id: senderGithubId ?? null,
         });
         this.logger.log(
           { githubInstallationId, linkedUserId: user?.id },

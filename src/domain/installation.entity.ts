@@ -32,6 +32,9 @@ export class Installation {
   @Column({ nullable: true })
   user_id: string;
 
+  @Column({ type: 'bigint', nullable: true })
+  sender_github_id: number | null;
+
   @Column({ nullable: true })
   llm_provider: string;
 

@@ -1,19 +1,19 @@
-import {
-  Injectable, Logger, UnauthorizedException,
-} from '@nestjs/common';
+import { Injectable, Logger, UnauthorizedException } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import * as crypto from 'crypto';
 import { JwtPayload } from './strategies/jwt.strategy';
 import { User } from 'src/domain/user.entity';
 import { UserRepository } from 'src/infrastructure/repositories/user-repository';
 import { RefreshTokenRepository } from 'src/infrastructure/repositories/refresh-token.repository';
+import { IsNull } from 'typeorm';
+import { InstallationRepository } from 'src/infrastructure/repositories/installation.repository';
 
 interface FindOrCreateUserDto {
   githubId: number;
   githubUsername: string;
   githubAvatarUrl?: string;
-  email?: string; 
-//   githubAccessToken: string;
+  email?: string;
+  //   githubAccessToken: string;
 }
 
 export interface TokenPair {
@@ -30,6 +30,7 @@ export class AuthService {
     private readonly userRepo: UserRepository,
     private readonly refreshTokenRepo: RefreshTokenRepository,
     private readonly jwtService: JwtService,
+    private readonly installationRepository: InstallationRepository,
   ) {}
 
   async findOrCreateUser(dto: FindOrCreateUserDto): Promise<User> {
@@ -55,7 +56,29 @@ export class AuthService {
       });
     }
 
+    await this.linkOrphanedInstallations(user);
     return user;
+  }
+
+  private async linkOrphanedInstallations(user: User): Promise<void> {
+    const orphaned = await this.installationRepository.find({
+      where: {
+        sender_github_id: user.github_id,
+        user_id: IsNull(),
+      },
+    });
+
+    if (orphaned.length === 0) return;
+
+    await this.installationRepository.update(
+      { sender_github_id: user.github_id, user_id: IsNull() },
+      { user_id: user.id },
+    );
+
+    this.logger.log(
+      { userId: user.id, linkedCount: orphaned.length },
+      'Linked orphaned installations to user on login',
+    );
   }
 
   async generateTokenPair(user: User): Promise<TokenPair> {
@@ -63,7 +86,7 @@ export class AuthService {
       sub: user.id,
       githubId: user.github_id,
       username: user.github_username,
-      isAdmin: false
+      isAdmin: false,
     };
 
     // Access token: short-lived (15 minutes), RS256 signed
@@ -73,7 +96,7 @@ export class AuthService {
     });
 
     // Refresh token: long-lived (30 days), opaque random string
-    const rawRefreshToken = crypto.randomUUID() + '-' + crypto.randomUUID();// 72 chars of entropy
+    const rawRefreshToken = crypto.randomUUID() + '-' + crypto.randomUUID(); // 72 chars of entropy
     const tokenHash = crypto
       .createHash('sha256')
       .update(rawRefreshToken)

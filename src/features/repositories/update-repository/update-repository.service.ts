@@ -123,11 +123,11 @@ export class RepositoriesService {
         'reviews',
         'r',
         'r.pull_request_id = pr.id AND r.status = :status',
-        {
-          status: 'completed',
-        },
+        { status: 'completed' },
       )
       .where('repo.id = :repoId', { repoId })
+      .groupBy('repo.id')
+      .addGroupBy('repo.full_name')
       .getRawOne();
 
     await this.cacheService.set(cacheKey, result, 300);

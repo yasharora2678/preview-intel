@@ -24,6 +24,7 @@ export class RepositoriesController {
   @Get()
   async findAll(@CurrentUser() user: User) {
     const repos = await this.repoService.findAllForUser(user);
+    console.log(repos, "----------------------------")
     return { data: repos, meta: { total: repos.length } };
   }
 

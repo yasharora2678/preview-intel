@@ -9,6 +9,7 @@ import {
   UpdateDateColumn,
 } from 'typeorm';
 import { Repository } from './repository.entity';
+import { Review } from './review/review.entity';
 
 @Entity('pull_requests')
 export class PullRequest {
@@ -45,6 +46,9 @@ export class PullRequest {
 
   @Column()
   state: string;
+
+  @OneToMany(() => Review, (review) => review.pullRequest)
+  reviews: Review[];
 
   @CreateDateColumn({ type: 'timestamptz' })
   created_at: Date;

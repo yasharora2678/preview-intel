@@ -27,7 +27,7 @@ export class JwtStrategy extends PassportStrategy(Strategy, 'jwt') {
       // RS256: verify with the PUBLIC key
       secretOrKey: configService
         .get<string>('JWT_PUBLIC_KEY')!
-        .replace(/\\n/g, '\n'),
+        .replace(/\\n/g, '\n'), // ← add this
       algorithms: ['RS256'],
     });
   }
