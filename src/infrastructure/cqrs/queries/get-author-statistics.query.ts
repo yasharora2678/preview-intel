@@ -1,5 +1,5 @@
 import { IQuery } from '@nestjs/cqrs';
 
-export class GetAuthorStatsQuery implements IQuery {
+export class GetAuthorStatisticsQuery implements IQuery {
   constructor(public readonly repositoryId: string) {}
 }

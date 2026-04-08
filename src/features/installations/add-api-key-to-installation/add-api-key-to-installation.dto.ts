@@ -1,10 +1,10 @@
 import { IsString, IsNotEmpty, IsIn } from 'class-validator';
 
-export class UpdateApiKeyDto {
+export class AddApiKeyDto {
   @IsString()
   @IsNotEmpty()
   apiKey: string;
 
-  @IsIn(['openai', 'groq', 'anthropic', 'huggingface'])
+  @IsIn(['openai', 'groq', 'anthropic', 'huggingface', 'openrouter'])
   provider: string;
 }

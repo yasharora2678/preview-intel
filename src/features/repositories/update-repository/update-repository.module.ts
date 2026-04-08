@@ -6,9 +6,10 @@ import { RepositoriesController } from './update-repository.controller';
 import { CacheService } from 'src/infrastructure/cache/cache.service';
 import { PullRequestRepository } from 'src/infrastructure/repositories/pull-request.repository';
 import { AppCqrsModule } from 'src/infrastructure/cqrs/cqrs.module';
+import { FindRepositoryModule } from '../find-repository/find-repository.module';
 
 @Module({
-  imports: [AppCqrsModule],
+  imports: [AppCqrsModule, FindRepositoryModule],
   controllers: [RepositoriesController],
   providers: [
     RepositoriesService,

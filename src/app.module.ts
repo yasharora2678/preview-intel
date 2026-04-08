@@ -13,13 +13,11 @@ import { AppCqrsModule } from './infrastructure/cqrs/cqrs.module';
 import { AuthModule } from './features/auth/auth.module';
 import { ReviewModule } from './features/reviews/reviews.module';
 import { GithubAppModule } from './infrastructure/github/github-app.module';
-import { UpdateRepositoryModule } from './features/repositories/update-repository/update-repository.module';
 import { ProcessorModule } from './infrastructure/processors/pr-review-processor/pr-review-processor.module';
-import { GetInstallationModule } from './features/installations/get-installation/get-installation.module';
 import { SharedModule } from './shared/shared.module';
 import { HealthModule } from './features/health/health.module';
-import { CreateInstallationModule } from './features/installations/create-installation/create-installation.module';
-import { AddApiKeyToInstallationsModule } from './features/installations/add-api-key-to-installation/add-api-key-to-installation.module';
+import { RepositoryModule } from './features/repositories/repository.module';
+import { InstallationModule } from './features/installations/installation.module';
 
 @Module({
   imports: [
@@ -36,11 +34,9 @@ import { AddApiKeyToInstallationsModule } from './features/installations/add-api
     AuthModule,
     ReviewModule,
     ProcessorModule,
-    UpdateRepositoryModule,
+    RepositoryModule,
     HealthModule,
-    GetInstallationModule,
-    CreateInstallationModule,
-    AddApiKeyToInstallationsModule,
+    InstallationModule,
     LoggerModule.forRoot({
       pinoHttp: {
         level: process.env.NODE_ENV === 'production' ? 'info' : 'debug',

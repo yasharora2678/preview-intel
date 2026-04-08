@@ -21,31 +21,6 @@ import { PaginationDto } from 'src/infrastructure/dto/pagination.dto';
 export class RepositoriesController {
   constructor(private readonly repoService: RepositoriesService) {}
 
-  @Get()
-  async findAll(@CurrentUser() user: User) {
-    const repos = await this.repoService.findAllForUser(user);
-    console.log(repos, "----------------------------")
-    return { data: repos, meta: { total: repos.length } };
-  }
-
-  @Get(':id')
-  async findOne(
-    @Param('id', ParseUUIDPipe) id: string,
-    @CurrentUser() user: User,
-  ) {
-    const repo = await this.repoService.findOneForUser(id, user);
-    return { data: repo };
-  }
-
-  @Get(':id/summary')
-  async getSummary(
-    @Param('id', ParseUUIDPipe) id: string,
-    @CurrentUser() user: User,
-  ) {
-    const summary = await this.repoService.getRepoSummary(id, user);
-    return { data: summary };
-  }
-
   @Patch(':id/settings')
   async updateSettings(
     @Param('id', ParseUUIDPipe) id: string,
@@ -76,50 +51,5 @@ export class RepositoriesController {
       isEnabled: false,
     });
     return { data: updated };
-  }
-
-  @Get(':id/pull-requests')
-  async getPullRequests(
-    @Param('id', ParseUUIDPipe) id: string,
-    @CurrentUser() user: User,
-    @Query() pagination: PaginationDto,
-  ) {
-    const result = await this.repoService.getPullRequestsForRepo(
-      id,
-      user,
-      pagination,
-    );
-    return {
-      data: result.items,
-      meta: { total: result.total, page: result.page, limit: result.limit },
-    };
-  }
-
-  @Get(':id/analytics/score-trend')
-  async getScoreTrend(
-    @Param('id', ParseUUIDPipe) id: string,
-    @CurrentUser() user: User,
-    @Query('period') period: '7d' | '30d' | '90d' | 'all' = '30d',
-  ) {
-    const data = await this.repoService.getScoreTrend(id, user, period);
-    return { data };
-  }
-
-  @Get(':id/analytics/issue-distribution')
-  async getIssueDistribution(
-    @Param('id', ParseUUIDPipe) id: string,
-    @CurrentUser() user: User,
-  ) {
-    const data = await this.repoService.getIssueDistribution(id, user);
-    return { data };
-  }
-
-  @Get(':id/analytics/author-stats')
-  async getAuthorStats(
-    @Param('id', ParseUUIDPipe) id: string,
-    @CurrentUser() user: User,
-  ) {
-    const data = await this.repoService.getAuthorStats(id, user);
-    return { data };
   }
 }

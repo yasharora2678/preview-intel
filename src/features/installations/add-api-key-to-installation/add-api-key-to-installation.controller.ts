@@ -10,7 +10,7 @@ import { JwtAuthGuard } from 'src/features/auth/guards/jwt-auth.guard';
 import { CurrentUser } from 'src/infrastructure/decorators/current-user.decorator';
 import { User } from 'src/domain/user.entity';
 import { AddApiKeyToInstallationsHandler } from './add-api-key-to-installation.service';
-import { UpdateApiKeyDto } from '../dto/update-api-key.dto';
+import { AddApiKeyDto } from './add-api-key-to-installation.dto';
 
 @Controller('v1/installations')
 @UseGuards(JwtAuthGuard)
@@ -20,12 +20,12 @@ export class AddApiKeyToInstallationsController {
   ) {}
 
   @Patch(':id/api-key')
-  async updateApiKey(
+  async handle(
     @Param('id', ParseUUIDPipe) id: string,
     @CurrentUser() user: User,
-    @Body() dto: UpdateApiKeyDto,
+    @Body() dto: AddApiKeyDto,
   ) {
-    await this.addApiKeyToInstallationsHandler.updateApiKey(id, dto, user);
+    await this.addApiKeyToInstallationsHandler.handle(id, dto, user);
     return { data: { message: 'API key updated successfully' } };
   }
 }

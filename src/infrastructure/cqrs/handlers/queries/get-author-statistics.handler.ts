@@ -1,18 +1,18 @@
 import { QueryHandler, IQueryHandler } from '@nestjs/cqrs';
-import { GetAuthorStatsQuery } from '../../queries/get-author-stats.query';
+import { GetAuthorStatisticsQuery } from '../../queries/get-author-statistics.query';
 import { ReviewsRepository } from 'src/infrastructure/repositories/review-repository';
 import { CacheService } from 'src/infrastructure/cache/cache.service';
 import { InjectRepository } from '@nestjs/typeorm';
 
-@QueryHandler(GetAuthorStatsQuery)
-export class GetAuthorStatsHandler implements IQueryHandler<GetAuthorStatsQuery> {
+@QueryHandler(GetAuthorStatisticsQuery)
+export class GetAuthorStatisticsHandler implements IQueryHandler<GetAuthorStatisticsQuery> {
   constructor(
     @InjectRepository(ReviewsRepository)
     private readonly reviewsRepository: ReviewsRepository,
     private readonly cacheService: CacheService,
   ) {}
 
-  async execute(query: GetAuthorStatsQuery) {
+  async execute(query: GetAuthorStatisticsQuery) {
     const cacheKey = this.cacheService.keys.authorStats(query.repositoryId);
     const cached = await this.cacheService.get(cacheKey);
     if (cached) return cached;

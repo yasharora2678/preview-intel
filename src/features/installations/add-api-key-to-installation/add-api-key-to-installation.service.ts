@@ -7,7 +7,7 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { InstallationRepository } from 'src/infrastructure/repositories/installation.repository';
 import { User } from 'src/domain/user.entity';
 import { EncryptionService } from 'src/shared/encryption-service';
-import { UpdateApiKeyDto } from '../dto/update-api-key.dto';
+import { AddApiKeyDto } from './add-api-key-to-installation.dto';
 
 @Injectable()
 export class AddApiKeyToInstallationsHandler {
@@ -17,10 +17,9 @@ export class AddApiKeyToInstallationsHandler {
     private readonly installationRepository: InstallationRepository,
   ) {}
 
-  // Add method:
-  async updateApiKey(
+  async handle(
     installationId: string,
-    dto: UpdateApiKeyDto,
+    dto: AddApiKeyDto,
     user: User,
   ): Promise<void> {
     const installation = await this.installationRepository.findOne({
@@ -29,7 +28,6 @@ export class AddApiKeyToInstallationsHandler {
 
     if (!installation) throw new NotFoundException('Installation not found');
 
-    // Only the user who owns this installation can update its key
     if (installation.user_id !== user.id) {
       throw new ForbiddenException(
         'You do not have access to this installation',

@@ -24,15 +24,11 @@ export class AuthController {
 
   constructor(private readonly authService: AuthService) {}
 
-  // Step 1: Redirect user to GitHub OAuth
   @Get('github')
   @Public()
   @UseGuards(AuthGuard('github'))
-  async githubLogin(): Promise<void> {
-    // Passport handles the redirect automatically
-  }
+  async githubLogin(): Promise<void> {}
 
-  // Step 2: GitHub redirects back here with the user profile
   @Get('github/callback')
   @Public()
   @UseGuards(AuthGuard('github'))
@@ -56,7 +52,6 @@ export class AuthController {
     );
   }
 
-  // Rotate access token using refresh token cookie
   @Post('refresh')
   @Public()
   @HttpCode(HttpStatus.OK)
@@ -84,7 +79,6 @@ export class AuthController {
     };
   }
 
-  // Logout: revoke refresh token and clear cookie
   @Delete('logout')
   @HttpCode(HttpStatus.NO_CONTENT)
   async logout(
@@ -98,11 +92,9 @@ export class AuthController {
     res.clearCookie(REFRESH_TOKEN_COOKIE, { path: '/api/v1/auth' });
   }
 
-  // Return the currently authenticated user's profile
   @Get('me')
   @UseGuards(AuthGuard('jwt'))
   async getMe(@CurrentUser() user: User) {
-    console.log(user, "User")
     return {
       data: {
         id: user.id,

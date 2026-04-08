@@ -13,7 +13,7 @@ import { ReviewsRepository } from '../repositories/review-repository';
 import { ReviewIssueRepository } from '../repositories/review-issue.repository';
 import { GetScoreTrendHandler } from './handlers/queries/get-score-trend.handler';
 import { GetIssueDistributionHandler } from './handlers/queries/get-issue-distribution.handler';
-import { GetAuthorStatsHandler } from './handlers/queries/get-author-stats.handler';
+import { GetAuthorStatisticsHandler } from './handlers/queries/get-author-statistics.handler';
 
 const CommandHandlers = [
   CreateReviewHandler,
@@ -26,7 +26,7 @@ const QueryHandlers = [
   GetReviewDetailHandler,
   GetScoreTrendHandler,
   GetIssueDistributionHandler,
-  GetAuthorStatsHandler,
+  GetAuthorStatisticsHandler,
 ];
 
 @Module({
