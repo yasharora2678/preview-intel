@@ -13,7 +13,6 @@ import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 export class ReviewsController {
   constructor(private readonly reviewsService: ReviewsService) {}
 
-  // GET /api/v1/repositories/:repoId/reviews
   @Get('repositories/:repoId/reviews')
   async getRepositoryReviews(
     @Param('repoId', ParseUUIDPipe) repoId: string,

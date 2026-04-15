@@ -31,7 +31,7 @@ export class GetIssueDistributionHandler implements IQueryHandler<GetIssueDistri
       .orderBy('count', 'DESC')
       .getRawMany();
 
-    await this.cacheService.set(cacheKey, result, 600); // 10 min cache
+    await this.cacheService.set(cacheKey, result, 600);
     return result;
   }
 }

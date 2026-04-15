@@ -36,7 +36,7 @@ export class GetAuthorStatisticsHandler implements IQueryHandler<GetAuthorStatis
       .orderBy('"reviewsWithCritical"', 'DESC')
       .getRawMany();
 
-    await this.cacheService.set(cacheKey, result, 300);
+    await this.cacheService.set(cacheKey, result, 600);
     return result;
   }
 }

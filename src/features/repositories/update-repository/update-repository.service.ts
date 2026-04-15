@@ -46,7 +46,6 @@ export class RepositoriesService {
       },
     );
 
-    // Invalidate repo-related cache
     await this.cacheService.invalidatePattern(`repo:${repo.id}:`);
 
     this.logger.log({

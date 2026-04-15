@@ -17,7 +17,6 @@ export class GetScoreTrendHandler implements IQueryHandler<GetScoreTrendQuery> {
     const cached = await this.cacheService.get(cacheKey);
     if (cached) return cached;
 
-    // Convert period to interval SQL string
     const intervalMap: Record<string, string> = {
       '7d': '7 days', '30d': '30 days', '90d': '90 days', all: null,
     };
@@ -39,7 +38,7 @@ export class GetScoreTrendHandler implements IQueryHandler<GetScoreTrendQuery> {
     }
 
     const result = await qb.getRawMany();
-    await this.cacheService.set(cacheKey, result, 300); // 5 min cache
+    await this.cacheService.set(cacheKey, result, 300);
     return result;
   }
 }

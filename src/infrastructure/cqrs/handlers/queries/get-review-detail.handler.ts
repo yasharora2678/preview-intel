@@ -29,7 +29,6 @@ export class GetReviewDetailHandler
       throw new NotFoundException(`Review ${query.reviewId} not found`);
     }
 
-    // Cache for 5 minutes — completed reviews don't change
     if (review.status === 'completed') {
       await this.cacheService.set(cacheKey, review, 300);
     }

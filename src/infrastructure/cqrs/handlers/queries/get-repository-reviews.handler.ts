@@ -20,11 +20,9 @@ export class GetRepositoryReviewsHandler
       query.limit,
     );
 
-    // Try cache first
     const cached = await this.cacheService.get(cacheKey);
     if (cached) return cached;
 
-    // Build query
     const qb = this.reviewsRepository
       .createQueryBuilder('review')
       .innerJoin('review.pullRequest', 'pr')
@@ -41,12 +39,10 @@ export class GetRepositoryReviewsHandler
         'pr.github_pr_url',
       ])
       .loadRelationCountAndMap('review.issueCount', 'review.issues')
-      // FIX 1: snake_case for orderBy
       .orderBy('review.created_at', 'DESC')
       .skip((query.page - 1) * query.limit)
       .take(query.limit);
 
-    // Apply filters
     if (query.filters?.authorLogin) {
       qb.andWhere('pr.author_login = :author', {
         author: query.filters.authorLogin,
@@ -65,7 +61,6 @@ export class GetRepositoryReviewsHandler
       qb.andWhere('review.created_at <= :dateTo', { dateTo: query.filters.dateTo });
     }
 
-    // getManyAndCount() now works correctly — no correlated subquery conflict
     const [items, total] = await qb.getManyAndCount();
 
     const result = { items, total, page: query.page, limit: query.limit };

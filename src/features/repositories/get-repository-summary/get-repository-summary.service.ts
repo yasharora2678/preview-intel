@@ -17,7 +17,7 @@ export class GetRepositorySummaryService {
   ) {}
 
   public async handle(repoId: string, user: User) {
-    await this.findRepository.handle(repoId, user); // Auth check
+    await this.findRepository.handle(repoId, user);
 
     const cacheKey = this.cacheService.keys.repoSummary(repoId);
     const cached = await this.cacheService.get(cacheKey);

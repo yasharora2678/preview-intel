@@ -47,26 +47,25 @@ export class CacheService {
     }
   }
 
-  // Invalidate all cache keys matching a prefix pattern
   async invalidatePattern(pattern: string): Promise<void> {
     try {
-      // Use SCAN instead of KEYS — never block Redis in production
       const stream = this.redis.scanStream({
         match: `${pattern}*`,
         count: 100,
       });
 
-      stream.on('data', async (keys: string[]) => {
-        if (keys.length > 0) {
-          await this.redis.del(...keys);
-        }
+    stream.on('data', (keys: string[]) => {
+      stream.pause();
+
+      this.redis.del(...keys).finally(() => {
+        stream.resume();
       });
+    });
     } catch (err) {
       this.logger.error({ msg: 'Cache invalidate failed', pattern, err });
     }
   }
 
-  // Cache key builders — centralized so they never drift
   keys = {
     repoReviews: (repoId: string, page: number, limit: number) =>
       `repo:${repoId}:reviews:${page}:${limit}`,
