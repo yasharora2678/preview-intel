@@ -6,10 +6,10 @@ import Redis from 'ioredis';
 export class CacheService {
   private readonly logger = new Logger(CacheService.name);
   private readonly redis: Redis;
-  private readonly DEFAULT_TTL = 300; // 5 minutes
+  private readonly DEFAULT_TTL = 300;
 
   constructor(private readonly configService: ConfigService) {
-    this.redis = new Redis(configService.get<string>('REDIS_URL')!, {
+    this.redis = new Redis(this.configService.get<string>('REDIS_URL'), {
       keyPrefix: 'cache:',
       lazyConnect: true,
       enableReadyCheck: true,
@@ -27,7 +27,7 @@ export class CacheService {
       return JSON.parse(value) as T;
     } catch (err) {
       this.logger.error({ msg: 'Cache get failed', key, err });
-      return null; // Graceful degradation — cache miss is never fatal
+      return null;
     }
   }
 
@@ -47,7 +47,7 @@ export class CacheService {
     try {
       await this.redis.del(key);
     } catch (err) {
-      this.logger.error({ msg: 'Cache del failed', key, err });
+      this.logger.error({ msg: 'Cache deletion failed', key, err });
     }
   }
 

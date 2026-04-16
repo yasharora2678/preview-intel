@@ -3,7 +3,6 @@ import { UpdateReviewStatusCommand } from '../../commands/update-review-status.c
 import { CacheService } from 'src/infrastructure/cache/cache.service';
 import { ReviewsRepository } from 'src/infrastructure/repositories/review-repository';
 
-
 @CommandHandler(UpdateReviewStatusCommand)
 export class UpdateReviewStatusHandler
   implements ICommandHandler<UpdateReviewStatusCommand>
@@ -19,7 +18,6 @@ export class UpdateReviewStatusHandler
       ...command.updates,
     });
 
-    // Invalidate the cached review detail
     await this.cacheService.del(
       this.cacheService.keys.reviewDetail(command.reviewId),
     );

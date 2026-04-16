@@ -2,7 +2,6 @@ import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
 import { SaveReviewIssuesCommand } from '../../commands/save-review-issues.command';
 import { ReviewIssueRepository } from 'src/infrastructure/repositories/review-issue.repository';
 
-
 @CommandHandler(SaveReviewIssuesCommand)
 export class SaveReviewIssuesHandler
   implements ICommandHandler<SaveReviewIssuesCommand>
@@ -26,7 +25,6 @@ export class SaveReviewIssuesHandler
       }),
     );
 
-    // Bulk insert — much faster than individual saves
     await this.reviewIssueRepository.insert(entities);
   }
 }

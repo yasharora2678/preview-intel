@@ -91,7 +91,6 @@ export class GithubClientService {
       'Fetched PR diff',
     );
 
-    // Chunk large diffs into multiple LLM calls
     return this.chunkFiles(files, {
       prTitle: pr.title,
       prDescription: pr.body || undefined,

@@ -59,7 +59,6 @@ export class ReviewsService {
       new GetReviewDetailQuery(reviewId, user.id),
     );
 
-    // Verify user has access to this review's repo
     await this.verifyRepoAccess(review.pullRequest.repository.id, user);
 
     return review;
