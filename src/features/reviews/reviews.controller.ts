@@ -17,7 +17,8 @@ export class ReviewsController {
   async getRepositoryReviews(
     @Param('repoId', ParseUUIDPipe) repoId: string,
     @CurrentUser() user: User,
-    @Query() pagination: PaginationDto,
+    @Query('page') page: number,
+    @Query('limit') limit: number,
     @Query('author') author?: string,
     @Query('minScore') minScore?: number,
     @Query('maxScore') maxScore?: number,
@@ -25,7 +26,8 @@ export class ReviewsController {
     const result = await this.reviewsService.getRepositoryReviews(
       repoId,
       user,
-      pagination,
+      page,
+      limit,
       { authorLogin: author, minScore, maxScore },
     );
 
@@ -39,7 +41,6 @@ export class ReviewsController {
     };
   }
 
-  // GET /api/v1/reviews/:reviewId
   @Get('reviews/:reviewId')
   async getReviewDetail(
     @Param('reviewId', ParseUUIDPipe) reviewId: string,
@@ -49,7 +50,6 @@ export class ReviewsController {
     return { data: review };
   }
 
-  // POST /api/v1/reviews/:reviewId/rereview
   @Post('reviews/:reviewId/rereview')
   async triggerRereview(
     @Param('reviewId', ParseUUIDPipe) reviewId: string,
@@ -59,7 +59,6 @@ export class ReviewsController {
     return { data: result };
   }
 
-  // GET /api/v1/pull-requests/:prId/reviews
   @Get('pull-requests/:prId/reviews')
   async getPullRequestReviews(
     @Param('prId', ParseUUIDPipe) prId: string,

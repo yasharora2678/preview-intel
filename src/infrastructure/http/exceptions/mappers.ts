@@ -96,3 +96,17 @@ export class InValidRawBodyExceptionMapper extends ErrorMapper {
     return ForbiddenMapper.mapError(error, extension);
   }
 }
+
+export class UnauthorizedExceptionMapper extends ErrorMapper {
+  constructor() {
+    super(UnauthorizedException);
+  }
+
+  mapError(error: Error): ProblemDocument {
+    const extension = new ProblemDocumentExtension({
+      type_constant: 'IS_UNAUTHORIZED',
+    });
+
+    return ForbiddenMapper.mapError(error, extension);
+  }
+}

@@ -14,7 +14,7 @@ import { PaginationDto } from 'src/infrastructure/dto/pagination.dto';
 import { PullRequestRepository } from 'src/infrastructure/repositories/pull-request.repository';
 import { GithubRepository } from 'src/infrastructure/repositories/repositories.repository';
 import { ReviewsRepository } from 'src/infrastructure/repositories/review-repository';
-import { JobPriority, PrReviewJobData } from 'src/shared/pr-review-job-data';
+import { PrReviewJobData } from 'src/shared/pr-review-job-data';
 import { ReviewResult } from '../../domain/review/review-provider.interface';
 import { ReviewIssueRepository } from 'src/infrastructure/repositories/review-issue.repository';
 import { InjectQueue } from '@nestjs/bullmq';
@@ -37,7 +37,8 @@ export class ReviewsService {
   async getRepositoryReviews(
     repoId: string,
     user: User,
-    pagination: PaginationDto,
+    page: number,
+    limit: number,
     filters?: any,
   ) {
     await this.verifyRepoAccess(repoId, user);
@@ -46,8 +47,8 @@ export class ReviewsService {
       new GetRepositoryReviewsQuery(
         repoId,
         user.id,
-        pagination.page,
-        pagination.limit,
+        page,
+        limit,
         filters,
       ),
     );
@@ -84,7 +85,6 @@ export class ReviewsService {
 
     const pr = review.pullRequest;
 
-    // Use the same jobId scheme as the outbox poller — dedup handles duplicates
     const jobId = crypto
       .createHash('md5')
       .update(
@@ -106,7 +106,7 @@ export class ReviewsService {
         headBranch: pr.head_branch,
         authorLogin: pr.author_login,
         githubPrUrl: pr.github_pr_url,
-        action: 'reopened', // treated as NORMAL priority
+        action: 'reopened',
         outboxEventId: `rereview-${reviewId}`,
       },
       { jobId, priority: 5 },
@@ -158,7 +158,6 @@ export class ReviewsService {
   }
 
   async createPending(data: PrReviewJobData): Promise<Review> {
-    // 1. Find the repository record by GitHub repo ID
     const repo = await this.githubRepository.findOne({
       where: { github_repo_id: data.githubRepoId },
     });
@@ -169,7 +168,6 @@ export class ReviewsService {
       );
     }
 
-    // 2. Upsert the PullRequest record
     let pr = await this.pullRequestRepository.findOne({
       where: {
         repository_id: repo.id,

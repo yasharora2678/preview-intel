@@ -31,7 +31,11 @@ export class CacheService {
     }
   }
 
-  async set<T>(key: string, value: T, ttlSeconds = this.DEFAULT_TTL): Promise<void> {
+  async set<T>(
+    key: string,
+    value: T,
+    ttlSeconds = this.DEFAULT_TTL,
+  ): Promise<void> {
     try {
       await this.redis.setex(key, ttlSeconds, JSON.stringify(value));
     } catch (err) {
@@ -54,29 +58,28 @@ export class CacheService {
         count: 100,
       });
 
-    stream.on('data', (keys: string[]) => {
-      stream.pause();
+      for await (const keys of stream) {
+        if (!keys.length) continue;
 
-      this.redis.del(...keys).finally(() => {
-        stream.resume();
-      });
-    });
+        const pipeline = this.redis.pipeline();
+        keys.forEach((key: string) => pipeline.del(key));
+        await pipeline.exec();
+      }
+
+      this.logger.log({ msg: 'Cache invalidated', pattern });
     } catch (err) {
       this.logger.error({ msg: 'Cache invalidate failed', pattern, err });
     }
   }
 
   keys = {
-    repoReviews: (repoId: string, page: number, limit: number) =>
-      `repo:${repoId}:reviews:${page}:${limit}`,
+    repoReviews: (repoId: string, page: number, limit: number, filters: any) =>
+      `repo:${repoId}:reviews:${page}:${limit}:${JSON.stringify(filters ?? {})}`,
     reviewDetail: (reviewId: string) => `review:${reviewId}`,
     scoreTrend: (repoId: string, period: string) =>
       `repo:${repoId}:score-trend:${period}`,
-    issueDistribution: (repoId: string) =>
-      `repo:${repoId}:issue-distribution`,
-    authorStats: (repoId: string) =>
-      `repo:${repoId}:author-stats`,
-    repoSummary: (repoId: string) =>
-      `repo:${repoId}:summary`,
+    issueDistribution: (repoId: string) => `repo:${repoId}:issue-distribution`,
+    authorStats: (repoId: string) => `repo:${repoId}:author-stats`,
+    repoSummary: (repoId: string) => `repo:${repoId}:summary`,
   };
 }

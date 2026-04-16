@@ -7,14 +7,12 @@ import {
   Body,
   ParseUUIDPipe,
   UseGuards,
-  Query,
 } from '@nestjs/common';
 import { RepositoriesService } from './update-repository.service';
 import { CurrentUser } from 'src/infrastructure/decorators/current-user.decorator';
 import { User } from 'src/domain/user.entity';
 import { UpdateRepositoryDto } from './update-repository.dto';
 import { JwtAuthGuard } from 'src/features/auth/guards/jwt-auth.guard';
-import { PaginationDto } from 'src/infrastructure/dto/pagination.dto';
 
 @Controller({ path: 'repositories', version: '1' })
 @UseGuards(JwtAuthGuard)

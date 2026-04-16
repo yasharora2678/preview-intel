@@ -28,7 +28,6 @@ export class WebHooksHandler {
 
   @Transactional()
   public async handle(eventType: string, deliveryId: string, payload: any) {
-    // ── Installation lifecycle events ───────────────────────────────────────
     if (eventType === 'installation') {
       return this.handleInstallationEvent(payload);
     }

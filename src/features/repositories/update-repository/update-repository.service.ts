@@ -1,7 +1,4 @@
-import {
-  Injectable,
-  Logger,
-} from '@nestjs/common';
+import { Injectable, Logger } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository as RepoEntity } from 'src/domain/repository.entity';
 import { User } from 'src/domain/user.entity';
@@ -31,22 +28,16 @@ export class RepositoriesService {
     await this.githubRepository.update(
       { id: repo.id },
       {
-        ...(dto.isEnabled !== undefined && { is_enabled: dto.isEnabled }),
-        ...(dto.skipDrafts !== undefined && { skip_drafts: dto.skipDrafts }),
-        ...(dto.skipBots !== undefined && { skip_bots: dto.skipBots }),
-        ...(dto.skipFilePatterns !== undefined && {
-          skip_file_patterns: dto.skipFilePatterns,
-        }),
-        ...(dto.scoreFailureThreshold !== undefined && {
-          score_failure_threshold: dto.scoreFailureThreshold,
-        }),
-        ...(dto.scoreSuccessThreshold !== undefined && {
-          score_success_threshold: dto.scoreSuccessThreshold,
-        }),
+        is_enabled: dto.isEnabled,
+        skip_drafts: dto.skipDrafts,
+        skip_bots: dto.skipBots,
+        skip_file_patterns: dto.skipFilePatterns,
+        score_failure_threshold: dto.scoreFailureThreshold,
+        score_success_threshold: dto.scoreSuccessThreshold,
       },
     );
 
-    await this.cacheService.invalidatePattern(`repo:${repo.id}:`);
+    await this.cacheService.invalidatePattern(`cache:repo:${repo.id}:`);
 
     this.logger.log({
       msg: 'Repository settings updated',

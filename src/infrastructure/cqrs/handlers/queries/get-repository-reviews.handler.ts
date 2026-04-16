@@ -3,11 +3,8 @@ import { GetRepositoryReviewsQuery } from '../../queries/get-repository-reviews.
 import { CacheService } from 'src/infrastructure/cache/cache.service';
 import { ReviewsRepository } from 'src/infrastructure/repositories/review-repository';
 
-
 @QueryHandler(GetRepositoryReviewsQuery)
-export class GetRepositoryReviewsHandler
-  implements IQueryHandler<GetRepositoryReviewsQuery>
-{
+export class GetRepositoryReviewsHandler implements IQueryHandler<GetRepositoryReviewsQuery> {
   constructor(
     private readonly reviewsRepository: ReviewsRepository,
     private readonly cacheService: CacheService,
@@ -18,6 +15,7 @@ export class GetRepositoryReviewsHandler
       query.repositoryId,
       query.page,
       query.limit,
+      query.filters
     );
 
     const cached = await this.cacheService.get(cacheKey);
@@ -44,21 +42,35 @@ export class GetRepositoryReviewsHandler
       .take(query.limit);
 
     if (query.filters?.authorLogin) {
-      qb.andWhere('pr.author_login = :author', {
-        author: query.filters.authorLogin,
+      qb.andWhere('pr.author_login LIKE :author', {
+        author: `%${query.filters.authorLogin}%`,
       });
     }
-    if (query.filters?.minScore !== undefined && !isNaN(query.filters.minScore)) {
-      qb.andWhere('review.score >= :minScore', { minScore: query.filters.minScore });
+    if (
+      query.filters?.minScore !== undefined &&
+      !isNaN(query.filters.minScore)
+    ) {
+      qb.andWhere('review.score >= :minScore', {
+        minScore: query.filters.minScore,
+      });
     }
-    if (query.filters?.maxScore !== undefined && !isNaN(query.filters.maxScore)) {
-      qb.andWhere('review.score <= :maxScore', { maxScore: query.filters.maxScore });
+    if (
+      query.filters?.maxScore !== undefined &&
+      !isNaN(query.filters.maxScore)
+    ) {
+      qb.andWhere('review.score <= :maxScore', {
+        maxScore: query.filters.maxScore,
+      });
     }
     if (query.filters?.dateFrom) {
-      qb.andWhere('review.created_at >= :dateFrom', { dateFrom: query.filters.dateFrom });
+      qb.andWhere('review.created_at >= :dateFrom', {
+        dateFrom: query.filters.dateFrom,
+      });
     }
     if (query.filters?.dateTo) {
-      qb.andWhere('review.created_at <= :dateTo', { dateTo: query.filters.dateTo });
+      qb.andWhere('review.created_at <= :dateTo', {
+        dateTo: query.filters.dateTo,
+      });
     }
 
     const [items, total] = await qb.getManyAndCount();

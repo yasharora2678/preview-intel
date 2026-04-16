@@ -2,7 +2,8 @@ import { MapperRegistry } from 'http-problem-details-mapper';
 import {
   DtoValidationExceptionMapper,
   InValidRawBodyExceptionMapper,
-  InValidSignatureExceptionMapper
+  InValidSignatureExceptionMapper,
+  UnauthorizedExceptionMapper
 } from './mappers';
 
 export class MapperRegistryFactory {
@@ -11,5 +12,6 @@ export class MapperRegistryFactory {
       .registerMapper(new DtoValidationExceptionMapper())
       .registerMapper(new InValidRawBodyExceptionMapper())
       .registerMapper(new InValidSignatureExceptionMapper())
+      .registerMapper(new UnauthorizedExceptionMapper())
   }
 }
