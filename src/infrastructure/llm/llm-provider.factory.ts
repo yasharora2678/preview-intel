@@ -2,7 +2,6 @@ import { Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { OpenAIProvider } from './providers/openai.provider';
 import { GroqProvider } from './providers/groq.provider';
-import * as crypto from 'crypto';
 import { ReviewProvider } from '../../domain/review/review-provider.interface';
 import { InstallationRepository } from 'src/infrastructure/repositories/installation.repository';
 import { HuggingFaceProvider } from './providers/hugging-face.provider';
@@ -19,11 +18,6 @@ export class LlmProviderFactory {
     private readonly encryptionService: EncryptionService
   ) {}
 
-  /**
-   * Returns the correct LLM provider for a given GitHub installation.
-   * Each installation can have its own API key and provider choice.
-   * Falls back to global env var keys if no per-installation key is set.
-   */
   async getForInstallation(
     githubInstallationId: number,
   ): Promise<ReviewProvider> {
@@ -34,7 +28,6 @@ export class LlmProviderFactory {
     const provider = installation?.llm_provider || 'groq';
     const encryptedKey = installation?.llm_api_key_encrypted;
 
-    // Decrypt per-installation key, or fall back to global env key
     const apiKey = encryptedKey
       ? this.encryptionService.decrypt(encryptedKey)
       : this.getGlobalKey(provider);
@@ -67,7 +60,7 @@ export class LlmProviderFactory {
     const keyMap: Record<string, string> = {
       openai: this.config.get('OPENAI_API_KEY') || '',
       groq: this.config.get('GROQ_API_KEY') || '',
-      huggingface: this.config.get('HUGGINGFACE_API_KEY') || 'hf_XBXtUSkRBxAWVKoXerbwPOrnFroaiaAU',
+      huggingface: this.config.get('HUGGINGFACE_API_KEY') || '',
       openrouter: this.config.get('OPENROUTER_API_KEY') || '',
     };
     const key = keyMap[provider];

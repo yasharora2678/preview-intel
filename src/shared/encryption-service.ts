@@ -13,7 +13,7 @@ export class EncryptionService {
   }
 
   encrypt(plaintext: string): string {
-    const iv = crypto.randomBytes(12);          // 96-bit IV for GCM
+    const iv = crypto.randomBytes(12);
     const cipher = crypto.createCipheriv('aes-256-gcm', this.keyBuffer, iv);
 
     const encrypted = Buffer.concat([
@@ -22,7 +22,6 @@ export class EncryptionService {
     ]);
     const authTag = cipher.getAuthTag();
 
-    // Format: iv:authTag:encrypted (all hex) — all 3 parts needed for decryption
     return `${iv.toString('hex')}:${authTag.toString('hex')}:${encrypted.toString('hex')}`;
   }
 

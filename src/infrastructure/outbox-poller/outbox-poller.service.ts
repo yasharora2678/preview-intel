@@ -33,7 +33,6 @@ export class OutboxPollerService implements OnModuleDestroy {
 
   @Cron('*/60 * * * * *')
   async pollOutbox() {
-    console.log('running outbox poller');
     if (this.isPolling) return;
     this.isPolling = true;
 
@@ -56,7 +55,6 @@ export class OutboxPollerService implements OnModuleDestroy {
     try {
       const { payload } = outboxMessage;
 
-      // Deduplication key: same PR + same commit = same job
       const jobId = crypto
         .createHash('md5')
         .update(
@@ -66,12 +64,11 @@ export class OutboxPollerService implements OnModuleDestroy {
 
       const priority = priorityMap[payload.action] ?? JobPriority.NORMAL;
 
-      // If synchronize: remove old job for this PR first
       if (payload.action === 'synchronize') {
         const prJobKey = `pr-dedup:${payload.githubRepoId}:${payload.prNumber}`;
         const previousJobId = await this.cacheService.get<string>(prJobKey);
 
-        if (previousJobId && previousJobId !== jobId) {
+        if (previousJobId !== jobId) {
           const previousJob = await this.queue.getJob(previousJobId);
           if (previousJob) {
             const state = await previousJob.getState();

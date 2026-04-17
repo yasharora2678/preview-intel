@@ -120,7 +120,6 @@ Review the above pull request and respond with JSON only.`;
       let text = response.data?.choices?.[0]?.message?.content;
       if (!text) throw new Error('Empty response from Groq');
 
-      // Strip <think> blocks
       text = text.replace(/<think>[\s\S]*?<\/think>/g, '').trim();
 
       let parsed: unknown;

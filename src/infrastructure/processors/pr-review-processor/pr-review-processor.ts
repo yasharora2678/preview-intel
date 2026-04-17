@@ -38,14 +38,11 @@ export class PrReviewProcessor extends WorkerHost {
       '🔄 Processing PR review job',
     );
 
-    // 1. Create review record with 'processing' status
     const review = await this.reviewService.createPending(data);
 
-    // 2. Post 'pending' status check on GitHub
     await this.commentService.postStatusCheck(data, 'pending');
 
     try {
-      // 3. Fetch and chunk the diff
       const [owner, repo] = data.repoFullName.split('/');
       const diffChunks = await this.gitHubClientService.fetchPrDiff(
         data.installationId,
@@ -62,19 +59,16 @@ export class PrReviewProcessor extends WorkerHost {
 
       await this.checkRateLimits(data);
 
-      // 4. Get the configured LLM provider for this installation
       const provider = await this.providerFactory.getForInstallation(
         data.installationId,
       );
 
-      //   // 5. Call LLM (with circuit breaker) — merge chunks if multiple
       const results = await Promise.all(
         diffChunks.map((chunk) => this.circuitBreaker.review(provider, chunk)),
       );
 
       const mergedResult = this.mergeResults(results);
 
-      // 6. Save review and issues to DB
       await this.reviewService.saveCompleted(
         review.id,
         mergedResult,
@@ -83,7 +77,6 @@ export class PrReviewProcessor extends WorkerHost {
         1,
       );
 
-      // 7. Post review comment on GitHub PR
       const githubReviewId = await this.commentService.postReview(
         data,
         mergedResult,
@@ -98,7 +91,6 @@ export class PrReviewProcessor extends WorkerHost {
         );
       }
 
-      // 8. Update commit status check
       const statusState = mergedResult.score >= 70 ? 'success' : 'failure';
 
       await this.commentService.postStatusCheck(
@@ -146,7 +138,6 @@ export class PrReviewProcessor extends WorkerHost {
   private async checkRateLimits(data: PrReviewJobData): Promise<void> {
     const redis = (this.cacheService as any).redis;
 
-    // Limit 1: 5 LLM calls per installation per minute
     const instKey = `rate:installation:${data.installationId}:${Math.floor(Date.now() / 60_000)}`;
     const instCount = await redis.incr(instKey);
     if (instCount === 1) await redis.expire(instKey, 60);
@@ -157,7 +148,6 @@ export class PrReviewProcessor extends WorkerHost {
       );
     }
 
-    // Limit 2: 20 reviews per repo per hour
     const repoKey = `rate:repo:${data.repositoryId}:${Math.floor(Date.now() / 3_600_000)}`;
     const repoCount = await redis.incr(repoKey);
     if (repoCount === 1) await redis.expire(repoKey, 3600);

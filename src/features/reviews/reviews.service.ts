@@ -187,14 +187,12 @@ export class ReviewsService {
         github_pr_url: data.githubPrUrl,
       });
     } else {
-      // Update with latest commit SHA on re-push
       await this.pullRequestRepository.update(pr.id, {
         head_commit_sha: data.headCommitSha,
         title: data.prTitle,
       });
     }
 
-    // 3. Create the Review record in PROCESSING state
     const review = await this.reviewsRepository.save({
       pull_request_id: pr.id,
       head_commit_sha: data.headCommitSha,
@@ -205,9 +203,7 @@ export class ReviewsService {
     return review;
   }
 
-  /**
-   * Called after LLM returns a result. Saves score, summary, and all issues.
-   */
+
   async saveCompleted(
     reviewId: string,
     result: ReviewResult,
@@ -215,7 +211,6 @@ export class ReviewsService {
     model: string,
     githubReviewId?: number,
   ): Promise<void> {
-    // Update the review record
     await this.reviewsRepository.update(
       { id: reviewId },
       {
@@ -231,7 +226,6 @@ export class ReviewsService {
       },
     );
 
-    // Bulk insert all issues
     if (result.issues.length > 0) {
       const issues = result.issues.map((issue) =>
         this.reviewIssueRepository.create({

@@ -27,7 +27,7 @@ export interface DiffInput {
   files: Array<{
     filename: string;
     language: string;
-    patch: string; // the actual diff
+    patch: string;
   }>;
 }
 

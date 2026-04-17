@@ -15,7 +15,7 @@ export interface PrReviewJobData {
 }
 
 export enum JobPriority {
-  HIGH = 1,    // review_requested
-  NORMAL = 5,  // opened, reopened
-  LOW = 10,    // synchronize (re-push)
+  HIGH = 1,
+  NORMAL = 5,
+  LOW = 10,
 }

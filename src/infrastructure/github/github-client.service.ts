@@ -21,9 +21,7 @@ const MAX_CHARS_PER_CHUNK = MAX_TOKENS_PER_CHUNK * APPROX_CHARS_PER_TOKEN;
 export class GithubClientService {
   private readonly logger = new Logger(GithubClientService.name);
 
-  constructor(
-    @Inject(OCTOKIT_APP) private readonly githubApp,
-  ) {}
+  constructor(@Inject(OCTOKIT_APP) private readonly githubApp) {}
 
   private async getInstallationOctokit(
     installationId: number,
@@ -74,12 +72,12 @@ export class GithubClientService {
 
     const pr = prData.data;
     const files = filesData.data
-      .filter((f) => !this.shouldSkipFile(f.filename))
-      .filter((f) => f.patch) // some files have no patch (binary, too large)
-      .map((f) => ({
-        filename: f.filename,
-        language: this.detectLanguage(f.filename),
-        patch: f.patch!,
+      .filter((file) => this.shouldSkipFile(file.filename))
+      .filter((file) => file.patch)
+      .map((file) => ({
+        filename: file.filename,
+        language: this.detectLanguage(file.filename),
+        patch: file.patch,
       }));
 
     this.logger.log(
@@ -93,7 +91,7 @@ export class GithubClientService {
 
     return this.chunkFiles(files, {
       prTitle: pr.title,
-      prDescription: pr.body || undefined,
+      prDescription: pr.body || null,
     });
   }
 

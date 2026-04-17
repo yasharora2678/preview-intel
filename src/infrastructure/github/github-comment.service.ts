@@ -26,10 +26,6 @@ export class GithubCommentService {
     ) as unknown as Octokit;
   }
 
-  /**
-   * Posts the full review as a GitHub PR Review with inline comments.
-   * Returns the GitHub review ID for storage.
-   */
   async postReview(
     data: PrReviewJobData,
     result: ReviewResult,
@@ -47,7 +43,6 @@ export class GithubCommentService {
 
     const body = this.buildReviewBody(result, generalIssues);
 
-    // Build inline comments for each issue that has a line number
     const comments = inlineIssues.map((issue) => ({
       path: issue.file,
       line: issue.line!,
@@ -62,9 +57,7 @@ export class GithubCommentService {
           pull_number: data.prNumber,
           commit_id: data.headCommitSha,
           body,
-          event: 'COMMENT', // NEVER REQUEST_CHANGES or APPROVE — advisory only
-          // Drop inline comments after the first failed attempt — GitHub rejects them
-          // when line numbers are outdated (e.g. commit was amended after diff was fetched)
+          event: 'COMMENT',
           comments: attempt === 1 && comments.length > 0 ? comments : undefined,
         });
 
@@ -92,7 +85,6 @@ export class GithubCommentService {
         }
 
         if (isTransient) {
-          // Exponential backoff: 1s, 2s, 4s
           const delayMs = 1000 * Math.pow(2, attempt - 1);
           this.logger.warn(
             { status, attempt, delayMs },
@@ -100,8 +92,6 @@ export class GithubCommentService {
           );
           await new Promise((resolve) => setTimeout(resolve, delayMs));
         } else {
-          // Non-transient (e.g. 422 invalid line number) — retry without inline comments
-          // but don't wait (it's not a rate limit issue)
           this.logger.warn(
             { status, attempt, err: err.message },
             'Non-transient error — retrying without inline comments',
@@ -111,9 +101,6 @@ export class GithubCommentService {
     }
   }
 
-  /**
-   * Posts a commit status check — shows as a check on the PR.
-   */
   async postStatusCheck(
     data: PrReviewJobData,
     state: 'pending' | 'success' | 'failure' | 'error',
@@ -132,8 +119,6 @@ export class GithubCommentService {
       error: 'Review failed — will retry automatically',
     };
 
-    // I14: build the dashboard URL — links directly to this review's detail page
-    // data.reviewId isn't on PrReviewJobData yet, so link to the repo's reviews page
     const dashboardUrl =
       this.config.get<string>('DASHBOARD_URL') || 'http://localhost:3002';
     const targetUrl = `${dashboardUrl}/repositories/${data.repositoryId}/reviews`;
@@ -149,7 +134,6 @@ export class GithubCommentService {
         target_url: targetUrl,
       });
     } catch (err: any) {
-      // Status check failures are non-critical — log and continue
       this.logger.warn(
         { err: err.message },
         'Failed to post commit status check',
