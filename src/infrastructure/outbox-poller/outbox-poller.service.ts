@@ -72,7 +72,6 @@ export class OutboxPollerService implements OnModuleDestroy {
           const previousJob = await this.queue.getJob(previousJobId);
           if (previousJob) {
             const state = await previousJob.getState();
-            // Only remove if still waiting — never remove an active (running) job
             if (state === 'waiting' || state === 'delayed') {
               await previousJob.remove();
               this.logger.log(

@@ -6,6 +6,9 @@ import { CreateInstallationHandler } from '../installations/create-installation/
 import { CreateRepositoryHandler } from '../repositories/create-repository/create-repository.service';
 import { InstallationRepository } from 'src/infrastructure/repositories/installation.repository';
 import { randomUUID } from 'crypto';
+import { GithubRepository } from 'src/infrastructure/repositories/repositories.repository';
+import { In } from 'typeorm';
+import { Repository } from 'src/domain/repository.entity';
 
 const PROCESSABLE_ACTIONS = new Set([
   'opened',
@@ -24,6 +27,7 @@ export class WebHooksHandler {
     private readonly createRepositoryHandler: CreateRepositoryHandler,
     private readonly installationRepository: InstallationRepository,
     private readonly userRepository: UserRepository,
+    private readonly repository: GithubRepository,
   ) {}
 
   @Transactional()
@@ -108,7 +112,6 @@ export class WebHooksHandler {
     );
   }
 
-  // When someone installs the GitHub App on their account/org
   private async handleInstallationEvent(payload: any) {
     const action = payload.action;
     const githubInstallationId = payload.installation?.id;
@@ -116,7 +119,6 @@ export class WebHooksHandler {
     if (!githubInstallationId) return;
 
     if (action === 'created') {
-      // Try to link to an existing user (if they've already logged in via OAuth)
       const senderGithubId = payload.sender?.id;
       const user = senderGithubId
         ? await this.userRepository.findOne({
@@ -135,7 +137,7 @@ export class WebHooksHandler {
           github_account_type: payload.installation.account.type,
           llm_provider: 'groq',
           is_active: true,
-          user_id: user?.id ?? null, // linked if user exists, null otherwise
+          user_id: user?.id ?? null,
           sender_github_id: senderGithubId ?? null,
         });
         this.logger.log(
@@ -164,25 +166,69 @@ export class WebHooksHandler {
     }
   }
 
-  // When repos are added/removed from an existing installation
   private async handleInstallationRepositoriesEvent(payload: any) {
-    const action = payload.action; // 'added' or 'removed'
+    const action = payload.action;
+
     const installation = await this.installationRepository.findOne({
       where: { github_installation_id: payload.installation?.id },
     });
     if (!installation) return;
 
-    // Repositories removed from the installation should be disabled
     if (action === 'removed') {
       const removedIds: number[] = (payload.repositories_removed ?? []).map(
-        (r: any) => r.id,
+        (repository: any) => repository.id,
       );
       this.logger.log({ removedIds }, 'Repositories removed from installation');
-      // The actual disable will happen via the existing webhook flow or can be explicit here
+
+      if (removedIds.length > 0) {
+        await this.repository.update(
+          {
+            github_repo_id: In(removedIds),
+            installation: { id: installation.id },
+          },
+          { is_enabled: false },
+        );
+        this.logger.log({ removedIds }, 'Repositories disabled');
+      }
+    }
+
+    if (action === 'added') {
+      const addedRepos: any[] = payload.repositories_added ?? [];
+      if (addedRepos.length === 0) return;
+
+      this.logger.log(
+        { count: addedRepos.length },
+        'Repositories added to installation',
+      );
+
+      await this.repository
+        .createQueryBuilder()
+        .insert()
+        .into(Repository)
+        .values(
+          addedRepos.map((r) => ({
+            github_repo_id: r.id,
+            name: r.full_name,
+            full_name: r.full_name,
+            is_enabled: true,
+            installation: { id: installation.id },
+          })),
+        )
+        .orUpdate(
+          ['is_enabled'],
+          ['github_repo_id'],
+        )
+        .execute();
+
+      this.logger.log({ count: addedRepos.length }, 'Repositories upserted');
     }
 
     this.logger.log(
-      { action, added: payload.repositories_added?.length ?? 0 },
+      {
+        action,
+        added: payload.repositories_added?.length ?? 0,
+        removed: payload.repositories_removed?.length ?? 0,
+      },
       'Installation repositories event processed',
     );
   }
