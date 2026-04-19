@@ -52,10 +52,10 @@ export class Review {
   @Column({ type: 'bigint', nullable: true })
   github_review_id: number;
 
-  @Column({type: 'timestamptz', nullable: true })
+  @Column({ type: 'timestamptz', nullable: true })
   processing_started_at: Date;
 
-  @Column({type: 'timestamptz', nullable: true })
+  @Column({ type: 'timestamptz', nullable: true })
   processing_completed_at: Date;
 
   @CreateDateColumn({ type: 'timestamptz' })

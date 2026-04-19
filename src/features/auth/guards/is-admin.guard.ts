@@ -1,5 +1,8 @@
 import {
-  Injectable, CanActivate, ExecutionContext, ForbiddenException,
+  Injectable,
+  CanActivate,
+  ExecutionContext,
+  ForbiddenException,
 } from '@nestjs/common';
 import { User } from 'src/domain/user.entity';
 

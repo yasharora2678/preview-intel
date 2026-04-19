@@ -3,7 +3,7 @@ import { BullBoardModule } from '@bull-board/nestjs';
 import { BullModule } from '@nestjs/bullmq';
 import { Module } from '@nestjs/common';
 import { ConfigModule, ConfigService } from '@nestjs/config';
-import { BullMQAdapter } from '@bull-board/api/bullMQAdapter'; 
+import { BullMQAdapter } from '@bull-board/api/bullMQAdapter';
 import { DlqAlertService } from './dlq-alert-service';
 
 @Module({
@@ -34,15 +34,13 @@ import { DlqAlertService } from './dlq-alert-service';
       route: '/admin/queues',
       adapter: ExpressAdapter,
     }),
-    
+
     BullBoardModule.forFeature({
       name: 'pr-review',
       adapter: BullMQAdapter,
     }),
   ],
-  providers: [
-    DlqAlertService
-  ],
+  providers: [DlqAlertService],
   exports: [BullModule],
 })
 export class QueueModule {}

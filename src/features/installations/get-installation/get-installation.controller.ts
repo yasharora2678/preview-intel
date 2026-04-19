@@ -13,7 +13,8 @@ export class GetInstallationsController {
 
   @Get()
   async findAll(@CurrentUser() user: User) {
-    const installations = await this.getInstallationsHandler.findAllForUser(user);
+    const installations =
+      await this.getInstallationsHandler.findAllForUser(user);
     return { data: installations, meta: { total: installations.length } };
   }
 }

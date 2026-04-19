@@ -5,7 +5,11 @@ import { InstallationRepository } from 'src/infrastructure/repositories/installa
 
 @Module({
   imports: [],
-  providers: [LlmProviderFactory, CircuitBreakerService, InstallationRepository],
+  providers: [
+    LlmProviderFactory,
+    CircuitBreakerService,
+    InstallationRepository,
+  ],
   exports: [LlmProviderFactory, CircuitBreakerService, InstallationRepository],
 })
 export class LlmModule {}

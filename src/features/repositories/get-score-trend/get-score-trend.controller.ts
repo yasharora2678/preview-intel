@@ -14,9 +14,7 @@ import { GetScoreTrendService } from './get-score-trend.service';
 @Controller({ path: 'repositories', version: '1' })
 @UseGuards(JwtAuthGuard)
 export class GetScoreTrendController {
-  constructor(
-    private readonly getScoreTrendService: GetScoreTrendService,
-  ) {}
+  constructor(private readonly getScoreTrendService: GetScoreTrendService) {}
 
   @Get(':id/analytics/score-trend')
   public async handle(

@@ -5,7 +5,11 @@ import { InstallationRepository } from 'src/infrastructure/repositories/installa
 
 @Module({
   controllers: [],
-  providers: [CreateRepositoryHandler, GithubRepository, InstallationRepository],
+  providers: [
+    CreateRepositoryHandler,
+    GithubRepository,
+    InstallationRepository,
+  ],
   exports: [CreateRepositoryHandler, GithubRepository, InstallationRepository],
 })
 export class CreateRepositoryModule {}

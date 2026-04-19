@@ -4,7 +4,7 @@ import { AppService } from './app.service';
 import { ConfigModule } from '@nestjs/config';
 import { DatabaseModule } from './infrastructure/database/database.module';
 import { WebhooksModule } from './features/webhooks/webhooks.module';
-import { ScheduleModule } from '@nestjs/schedule'
+import { ScheduleModule } from '@nestjs/schedule';
 import { OutboxPollerModule } from './infrastructure/outbox-poller/outbox-poller.module';
 import { QueueModule } from './infrastructure/queue/queue.module';
 import { LoggerModule } from 'nestjs-pino';
@@ -37,14 +37,14 @@ import { InstallationModule } from './features/installations/installation.module
     RepositoryModule,
     HealthModule,
     InstallationModule,
-    LoggerModule.forRoot({
-      pinoHttp: {
-        level: process.env.NODE_ENV === 'production' ? 'info' : 'debug',
-        transport: process.env.NODE_ENV !== 'production'
-          ? { target: 'pino-pretty' }
-          : undefined,
-      },
-    }),
+    // LoggerModule.forRoot({
+    //   pinoHttp: {
+    //     level: process.env.NODE_ENV === 'production' ? 'info' : 'debug',
+    //     transport: process.env.NODE_ENV !== 'production'
+    //       ? { target: 'pino-pretty' }
+    //       : undefined,
+    //   },
+    // }),
   ],
   controllers: [AppController],
   providers: [AppService],

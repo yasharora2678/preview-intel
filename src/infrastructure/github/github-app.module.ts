@@ -10,12 +10,12 @@ export const OCTOKIT_APP = 'OCTOKIT_APP';
     {
       provide: OCTOKIT_APP,
       useFactory: async (config: ConfigService) => {
-
         const { App } = await import('@octokit/app');
 
         const { Octokit } = await import('@octokit/core');
 
-        const { restEndpointMethods } = await import('@octokit/plugin-rest-endpoint-methods');
+        const { restEndpointMethods } =
+          await import('@octokit/plugin-rest-endpoint-methods');
 
         const MyOctokit = Octokit.plugin(restEndpointMethods);
 

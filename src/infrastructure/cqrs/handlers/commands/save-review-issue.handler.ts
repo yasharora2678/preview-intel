@@ -3,12 +3,8 @@ import { SaveReviewIssuesCommand } from '../../commands/save-review-issues.comma
 import { ReviewIssueRepository } from 'src/infrastructure/repositories/review-issue.repository';
 
 @CommandHandler(SaveReviewIssuesCommand)
-export class SaveReviewIssuesHandler
-  implements ICommandHandler<SaveReviewIssuesCommand>
-{
-  constructor(
-    private readonly reviewIssueRepository: ReviewIssueRepository,
-  ) {}
+export class SaveReviewIssuesHandler implements ICommandHandler<SaveReviewIssuesCommand> {
+  constructor(private readonly reviewIssueRepository: ReviewIssueRepository) {}
 
   async execute(command: SaveReviewIssuesCommand): Promise<void> {
     if (!command.issues.length) return;

@@ -34,6 +34,9 @@ export class EncryptionService {
     const decipher = crypto.createDecipheriv('aes-256-gcm', this.keyBuffer, iv);
     decipher.setAuthTag(authTag);
 
-    return Buffer.concat([decipher.update(encrypted), decipher.final()]).toString('utf8');
+    return Buffer.concat([
+      decipher.update(encrypted),
+      decipher.final(),
+    ]).toString('utf8');
   }
 }

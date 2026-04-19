@@ -41,8 +41,14 @@ import { InstallationRepository } from 'src/infrastructure/repositories/installa
     UserRepository,
     RefreshTokenRepository,
     IsAdminGuard,
-    InstallationRepository
+    InstallationRepository,
   ],
-  exports: [AuthService, JwtAuthGuard, UserRepository, IsAdminGuard, InstallationRepository],
+  exports: [
+    AuthService,
+    JwtAuthGuard,
+    UserRepository,
+    IsAdminGuard,
+    InstallationRepository,
+  ],
 })
 export class AuthModule {}

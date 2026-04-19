@@ -10,11 +10,18 @@ export class RedisOAuthStateStore {
   constructor(private readonly cacheService: CacheService) {}
 
   // Called before redirecting to GitHub — generate and persist a state token
-  async store(_req: any, callback: (err: any, state: string) => void): Promise<void> {
+  async store(
+    _req: any,
+    callback: (err: any, state: string) => void,
+  ): Promise<void> {
     try {
       // 32 bytes of random hex = 64-char state token — cryptographically secure
       const state = randomBytes(32).toString('hex');
-      await this.cacheService.set(`${STATE_KEY_PREFIX}${state}`, 'valid', STATE_TTL_SECONDS);
+      await this.cacheService.set(
+        `${STATE_KEY_PREFIX}${state}`,
+        'valid',
+        STATE_TTL_SECONDS,
+      );
       callback(null, state);
     } catch (err) {
       callback(err, '');

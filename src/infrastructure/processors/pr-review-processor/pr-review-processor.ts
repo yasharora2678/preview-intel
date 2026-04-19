@@ -109,15 +109,13 @@ export class PrReviewProcessor extends WorkerHost {
           { pr: data.prNumber, provider: (err as CircuitOpenError).message },
           '🔴 Circuit open — moving job to delayed (5 min)',
         );
-        // Move job to delayed state — does NOT burn a retry attempt
         await job.moveToDelayed(Date.now() + 5 * 60 * 1000, token);
-        // DelayedError signals BullMQ that the job was intentionally delayed, not failed
         throw new DelayedError();
       }
 
       await this.reviewService.markFailed(review.id, (err as Error).message);
       await this.commentService.postStatusCheck(data, 'error');
-      throw err; // re-throw so BullMQ retries the job
+      throw err;
     }
   }
 

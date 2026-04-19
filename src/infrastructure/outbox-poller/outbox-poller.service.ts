@@ -13,9 +13,9 @@ import { CacheService } from 'src/infrastructure/cache/cache.service';
 
 const priorityMap: Record<string, number> = {
   review_requested: JobPriority.HIGH,
-  opened:           JobPriority.NORMAL,
-  reopened:         JobPriority.NORMAL,
-  synchronize:      JobPriority.LOW,
+  opened: JobPriority.NORMAL,
+  reopened: JobPriority.NORMAL,
+  synchronize: JobPriority.LOW,
 };
 
 @Injectable()
@@ -99,7 +99,12 @@ export class OutboxPollerService implements OnModuleDestroy {
       outboxMessage.markAsSent();
 
       this.logger.log(
-        { jobId, prNumber: payload.prNumber, repo: payload.repoFullName, traceId: payload.traceId },
+        {
+          jobId,
+          prNumber: payload.prNumber,
+          repo: payload.repoFullName,
+          traceId: payload.traceId,
+        },
         'Published to queue',
       );
 

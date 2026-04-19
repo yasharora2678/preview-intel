@@ -1,5 +1,7 @@
 import {
-  Injectable, NestInterceptor, ExecutionContext,
+  Injectable,
+  NestInterceptor,
+  ExecutionContext,
   CallHandler,
 } from '@nestjs/common';
 import { Observable } from 'rxjs';
@@ -17,9 +19,10 @@ export interface ApiResponse<T> {
 }
 
 @Injectable()
-export class ResponseEnvelopeInterceptor<T>
-  implements NestInterceptor<T, ApiResponse<T>>
-{
+export class ResponseEnvelopeInterceptor<T> implements NestInterceptor<
+  T,
+  ApiResponse<T>
+> {
   intercept(
     context: ExecutionContext,
     next: CallHandler,

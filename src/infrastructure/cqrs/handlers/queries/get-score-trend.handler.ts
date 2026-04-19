@@ -13,12 +13,18 @@ export class GetScoreTrendHandler implements IQueryHandler<GetScoreTrendQuery> {
   ) {}
 
   async execute(query: GetScoreTrendQuery) {
-    const cacheKey = this.cacheService.keys.scoreTrend(query.repositoryId, query.period);
+    const cacheKey = this.cacheService.keys.scoreTrend(
+      query.repositoryId,
+      query.period,
+    );
     const cached = await this.cacheService.get(cacheKey);
     if (cached) return cached;
 
     const intervalMap: Record<string, string> = {
-      '7d': '7 days', '30d': '30 days', '90d': '90 days', all: null,
+      '7d': '7 days',
+      '30d': '30 days',
+      '90d': '90 days',
+      all: null,
     };
     const interval = intervalMap[query.period];
 

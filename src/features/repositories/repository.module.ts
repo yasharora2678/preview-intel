@@ -19,7 +19,7 @@ import { CreateRepositoryModule } from './create-repository/create-repository.mo
     GetRepositorySummaryModule,
     GetScoreTrendModule,
     UpdateRepositoryModule,
-    CreateRepositoryModule
+    CreateRepositoryModule,
   ],
   controllers: [],
   providers: [],

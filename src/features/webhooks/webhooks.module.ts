@@ -11,6 +11,12 @@ import { UserRepository } from 'src/infrastructure/repositories/user-repository'
 @Module({
   imports: [CreateInstallationModule, CreateRepositoryModule],
   controllers: [WebhooksController],
-  providers: [WebHooksHandler, OutboxMessageRepository, GithubWebhookGuard, InstallationRepository, UserRepository],
+  providers: [
+    WebHooksHandler,
+    OutboxMessageRepository,
+    GithubWebhookGuard,
+    InstallationRepository,
+    UserRepository,
+  ],
 })
 export class WebhooksModule {}

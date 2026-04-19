@@ -13,7 +13,7 @@ export class GetRepositorySummaryService {
     @InjectRepository(GithubRepository)
     private readonly githubRepository: GithubRepository,
     private readonly cacheService: CacheService,
-    private readonly findRepository: FindRepositoryService
+    private readonly findRepository: FindRepositoryService,
   ) {}
 
   public async handle(repoId: string, user: User) {

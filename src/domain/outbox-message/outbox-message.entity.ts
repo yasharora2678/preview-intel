@@ -43,12 +43,12 @@ export class OutboxMessage {
   }
 
   public markAttempt(): void {
-  this.attempts += 1;
+    this.attempts += 1;
 
-  if (this.attempts >= 4) {
-    this.status = OutBoxStatus.FAILED;
-  } else {
-    this.status = OutBoxStatus.PENDING;
+    if (this.attempts >= 4) {
+      this.status = OutBoxStatus.FAILED;
+    } else {
+      this.status = OutBoxStatus.PENDING;
+    }
   }
-}
 }

@@ -44,13 +44,7 @@ export class ReviewsService {
     await this.verifyRepoAccess(repoId, user);
 
     return this.queryBus.execute(
-      new GetRepositoryReviewsQuery(
-        repoId,
-        user.id,
-        page,
-        limit,
-        filters,
-      ),
+      new GetRepositoryReviewsQuery(repoId, user.id, page, limit, filters),
     );
   }
 
@@ -148,7 +142,6 @@ export class ReviewsService {
       relations: ['installation'],
     });
 
-
     if (!repo) throw new NotFoundException('Repository not found');
 
     if (repo.installation.user_id !== user.id) {
@@ -202,7 +195,6 @@ export class ReviewsService {
 
     return review;
   }
-
 
   async saveCompleted(
     reviewId: string,

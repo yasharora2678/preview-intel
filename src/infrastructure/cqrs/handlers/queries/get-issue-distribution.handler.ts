@@ -13,7 +13,9 @@ export class GetIssueDistributionHandler implements IQueryHandler<GetIssueDistri
   ) {}
 
   async execute(query: GetIssueDistributionQuery) {
-    const cacheKey = this.cacheService.keys.issueDistribution(query.repositoryId);
+    const cacheKey = this.cacheService.keys.issueDistribution(
+      query.repositoryId,
+    );
     const cached = await this.cacheService.get(cacheKey);
     if (cached) return cached;
 

@@ -14,7 +14,7 @@ export class HealthController {
   ) {}
 
   @Get()
-  @Public()  // health check must be accessible without JWT
+  @Public() // health check must be accessible without JWT
   async check() {
     const checks = await Promise.allSettled([
       this.checkDatabase(),
@@ -23,7 +23,12 @@ export class HealthController {
     ]);
 
     const [db, redis, queue] = checks.map((r) =>
-      r.status === 'fulfilled' ? r.value : { status: 'down', error: (r as PromiseRejectedResult).reason?.message },
+      r.status === 'fulfilled'
+        ? r.value
+        : {
+            status: 'down',
+            error: (r as PromiseRejectedResult).reason?.message,
+          },
     );
 
     const allHealthy = checks.every((r) => r.status === 'fulfilled');

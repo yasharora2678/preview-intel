@@ -10,10 +10,7 @@ import { AppCqrsModule } from 'src/infrastructure/cqrs/cqrs.module';
 import { QueueModule } from 'src/infrastructure/queue/queue.module';
 
 @Module({
-  imports: [
-    AppCqrsModule,
-    QueueModule
-  ],
+  imports: [AppCqrsModule, QueueModule],
   controllers: [ReviewsController],
   providers: [
     ReviewsService,

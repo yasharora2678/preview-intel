@@ -14,7 +14,6 @@ export class DlqAlertService implements OnApplicationBootstrap {
   ) {}
 
   onApplicationBootstrap() {
-    // QueueEvents uses a separate Redis connection — needed to listen to queue-level events
     this.queueEvents = new QueueEvents('pr-review', {
       connection: { url: this.config.get('REDIS_URL') },
     });
@@ -25,11 +24,10 @@ export class DlqAlertService implements OnApplicationBootstrap {
 
       const maxAttempts = job.opts?.attempts ?? 4;
 
-      // Only alert when this is the FINAL failure (all retries exhausted)
       if (job.attemptsMade >= maxAttempts) {
         this.logger.error(
           {
-            alert: 'DLQ_JOB_FAILED',     // grep-friendly marker for log alerts
+            alert: 'DLQ_JOB_FAILED',
             jobId,
             prNumber: job.data?.prNumber,
             repo: job.data?.repoFullName,
@@ -39,7 +37,6 @@ export class DlqAlertService implements OnApplicationBootstrap {
           '🚨 Job moved to DLQ after exhausting all retries — manual intervention required',
         );
 
-        // If you add a webhook notification URL env var, send the alert here:
         const alertUrl = this.config.get<string>('DLQ_ALERT_WEBHOOK_URL');
         if (alertUrl) {
           await this.sendWebhookAlert(alertUrl, jobId, job.data, failedReason);

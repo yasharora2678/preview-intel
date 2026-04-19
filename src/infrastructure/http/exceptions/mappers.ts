@@ -1,10 +1,18 @@
-import { BadRequestException, HttpStatus, UnauthorizedException } from '@nestjs/common';
+import {
+  BadRequestException,
+  HttpStatus,
+  UnauthorizedException,
+} from '@nestjs/common';
 import {
   ProblemDocument,
   ProblemDocumentExtension,
 } from 'http-problem-details';
 import { ErrorMapper } from 'http-problem-details-mapper';
-import { DtoValidation, InValidRawBodyException, InValidSignatureException } from './exceptions';
+import {
+  DtoValidation,
+  InValidRawBodyException,
+  InValidSignatureException,
+} from './exceptions';
 
 class BadRequestMapper {
   static mapError(

@@ -1,5 +1,10 @@
 import {
-  Controller, Get, Post, Param, Query, ParseUUIDPipe,
+  Controller,
+  Get,
+  Post,
+  Param,
+  Query,
+  ParseUUIDPipe,
   UseGuards,
 } from '@nestjs/common';
 import { ReviewsService } from './reviews.service';
@@ -8,7 +13,7 @@ import { User } from 'src/domain/user.entity';
 import { CurrentUser } from 'src/infrastructure/decorators/current-user.decorator';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 
-@Controller({version: '1'})
+@Controller({ version: '1' })
 @UseGuards(JwtAuthGuard)
 export class ReviewsController {
   constructor(private readonly reviewsService: ReviewsService) {}

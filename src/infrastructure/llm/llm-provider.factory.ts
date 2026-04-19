@@ -15,7 +15,7 @@ export class LlmProviderFactory {
   constructor(
     private readonly config: ConfigService,
     private readonly installationRepository: InstallationRepository,
-    private readonly encryptionService: EncryptionService
+    private readonly encryptionService: EncryptionService,
   ) {}
 
   async getForInstallation(
@@ -51,8 +51,10 @@ export class LlmProviderFactory {
       case 'openrouter':
         return new OpenRouterProvider(apiKey);
       default:
-      this.logger.warn(`Unknown provider "${provider}", falling back to Groq`);
-      return new GroqProvider(this.getGlobalKey('groq'));
+        this.logger.warn(
+          `Unknown provider "${provider}", falling back to Groq`,
+        );
+        return new GroqProvider(this.getGlobalKey('groq'));
     }
   }
 

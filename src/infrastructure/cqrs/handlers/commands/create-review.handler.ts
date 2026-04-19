@@ -4,12 +4,9 @@ import { Review } from 'src/domain/review/review.entity';
 import { ReviewStatus } from 'src/domain/review/review-status.enum';
 import { ReviewsRepository } from 'src/infrastructure/repositories/review-repository';
 
-
 @CommandHandler(CreateReviewCommand)
 export class CreateReviewHandler implements ICommandHandler<CreateReviewCommand> {
-  constructor(
-    private readonly reviewsRepository: ReviewsRepository,
-  ) {}
+  constructor(private readonly reviewsRepository: ReviewsRepository) {}
 
   async execute(command: CreateReviewCommand): Promise<Review> {
     const review = this.reviewsRepository.create({

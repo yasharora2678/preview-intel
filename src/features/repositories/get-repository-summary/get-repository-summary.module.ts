@@ -6,7 +6,15 @@ import { FindRepositoryService } from '../find-repository/find-repository.servic
 
 @Module({
   controllers: [GetRepositorySummaryController],
-  providers: [GetRepositorySummaryService, GithubRepository, FindRepositoryService],
-  exports: [GetRepositorySummaryService, GithubRepository, FindRepositoryService],
+  providers: [
+    GetRepositorySummaryService,
+    GithubRepository,
+    FindRepositoryService,
+  ],
+  exports: [
+    GetRepositorySummaryService,
+    GithubRepository,
+    FindRepositoryService,
+  ],
 })
 export class GetRepositorySummaryModule {}

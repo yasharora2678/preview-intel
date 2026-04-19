@@ -1,6 +1,14 @@
 import {
-  Controller, Get, Post, Delete, UseGuards,
-  Req, Res, HttpCode, HttpStatus, Logger,
+  Controller,
+  Get,
+  Post,
+  Delete,
+  UseGuards,
+  Req,
+  Res,
+  HttpCode,
+  HttpStatus,
+  Logger,
 } from '@nestjs/common';
 import { AuthGuard } from '@nestjs/passport';
 import { Response, Request } from 'express';
@@ -11,14 +19,14 @@ import { User } from 'src/domain/user.entity';
 
 const REFRESH_TOKEN_COOKIE = 'refresh_token';
 const COOKIE_OPTIONS = {
-  httpOnly: true,         // Not accessible via JavaScript
+  httpOnly: true, // Not accessible via JavaScript
   secure: process.env.NODE_ENV === 'production',
   sameSite: 'lax' as const,
   maxAge: 30 * 24 * 60 * 60 * 1000, // 30 days in ms
-  path: '/api/v1/auth',  // Restrict cookie to auth routes only
+  path: '/api/v1/auth', // Restrict cookie to auth routes only
 };
 
-@Controller({path: 'auth', version: '1'})
+@Controller({ path: 'auth', version: '1' })
 export class AuthController {
   private readonly logger = new Logger(AuthController.name);
 

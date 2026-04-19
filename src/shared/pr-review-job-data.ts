@@ -1,8 +1,8 @@
 export interface PrReviewJobData {
   installationId: number;
-  repositoryId: string;        
+  repositoryId: string;
   githubRepoId: number;
-  repoFullName: string;          
+  repoFullName: string;
   prNumber: number;
   prTitle: string;
   headCommitSha: string;

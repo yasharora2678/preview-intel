@@ -4,11 +4,8 @@ import { GetReviewDetailQuery } from '../../queries/get-review-detail.query';
 import { CacheService } from 'src/infrastructure/cache/cache.service';
 import { ReviewsRepository } from 'src/infrastructure/repositories/review-repository';
 
-
 @QueryHandler(GetReviewDetailQuery)
-export class GetReviewDetailHandler
-  implements IQueryHandler<GetReviewDetailQuery>
-{
+export class GetReviewDetailHandler implements IQueryHandler<GetReviewDetailQuery> {
   constructor(
     private readonly reviewsRepository: ReviewsRepository,
     private readonly cacheService: CacheService,

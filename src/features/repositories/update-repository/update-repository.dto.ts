@@ -1,5 +1,11 @@
 import {
-  IsBoolean, IsOptional, IsString, IsInt, Min, Max, IsArray,
+  IsBoolean,
+  IsOptional,
+  IsString,
+  IsInt,
+  Min,
+  Max,
+  IsArray,
 } from 'class-validator';
 
 export class UpdateRepositoryDto {

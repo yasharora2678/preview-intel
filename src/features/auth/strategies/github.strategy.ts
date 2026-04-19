@@ -21,11 +21,7 @@ export class GithubStrategy extends PassportStrategy(Strategy, 'github') {
     });
   }
 
-  async validate(
-    accessToken: string,
-    _refreshToken: string,
-    profile: Profile,
-  ) {
+  async validate(accessToken: string, _refreshToken: string, profile: Profile) {
     // Passport calls this after GitHub redirects back
     // We upsert the user and return them
     const user = await this.authService.findOrCreateUser({
@@ -33,7 +29,7 @@ export class GithubStrategy extends PassportStrategy(Strategy, 'github') {
       githubUsername: profile.username!,
       githubAvatarUrl: profile.photos?.[0]?.value,
       email: profile.emails?.[0]?.value,
-    //   githubAccessToken: accessToken,
+      //   githubAccessToken: accessToken,
     });
     return user;
   }

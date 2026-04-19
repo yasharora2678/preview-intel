@@ -3,7 +3,7 @@ import {
   DtoValidationExceptionMapper,
   InValidRawBodyExceptionMapper,
   InValidSignatureExceptionMapper,
-  UnauthorizedExceptionMapper
+  UnauthorizedExceptionMapper,
 } from './mappers';
 
 export class MapperRegistryFactory {
@@ -12,6 +12,6 @@ export class MapperRegistryFactory {
       .registerMapper(new DtoValidationExceptionMapper())
       .registerMapper(new InValidRawBodyExceptionMapper())
       .registerMapper(new InValidSignatureExceptionMapper())
-      .registerMapper(new UnauthorizedExceptionMapper())
+      .registerMapper(new UnauthorizedExceptionMapper());
   }
 }

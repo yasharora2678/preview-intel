@@ -8,15 +8,7 @@ import { FindRepositoryModule } from '../find-repository/find-repository.module'
 @Module({
   imports: [FindRepositoryModule],
   controllers: [GetPullRequestsController],
-  providers: [
-    GetPullRequestsService,
-    GithubRepository,
-    PullRequestRepository,
-  ],
-  exports: [
-    GetPullRequestsService,
-    GithubRepository,
-    PullRequestRepository,
-  ],
+  providers: [GetPullRequestsService, GithubRepository, PullRequestRepository],
+  exports: [GetPullRequestsService, GithubRepository, PullRequestRepository],
 })
 export class GetPullRequestsModule {}

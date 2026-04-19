@@ -15,7 +15,7 @@ export class GetRepositoryReviewsHandler implements IQueryHandler<GetRepositoryR
       query.repositoryId,
       query.page,
       query.limit,
-      query.filters
+      query.filters,
     );
 
     const cached = await this.cacheService.get(cacheKey);

@@ -8,28 +8,28 @@ export class OutboxMessageRepository extends Repository<OutboxMessage> {
   constructor(dataSource: DataSource) {
     super(OutboxMessage, dataSource.createEntityManager());
   }
-//   createOutboxPayloadFromEvent = (
-//     outbox_message: any,
-//   ) => {
+  //   createOutboxPayloadFromEvent = (
+  //     outbox_message: any,
+  //   ) => {
 
-//     const messageType = outbox_message.getType();    
-//     const { exchange, routingKey } = MessageDestinationService.get(messageType);
+  //     const messageType = outbox_message.getType();
+  //     const { exchange, routingKey } = MessageDestinationService.get(messageType);
 
-//     return {
-//       message_id: outbox_message.getId(),
-//       type: messageType,
-//       exchange: exchange,
-//       routing_key: routingKey,
-//       properties: outbox_message.getProperties(),
-//       headers: outbox_message.getHeaders(),
-//       body: outbox_message.getPayload(),
-//     };
-//   };
+  //     return {
+  //       message_id: outbox_message.getId(),
+  //       type: messageType,
+  //       exchange: exchange,
+  //       routing_key: routingKey,
+  //       properties: outbox_message.getProperties(),
+  //       headers: outbox_message.getHeaders(),
+  //       body: outbox_message.getPayload(),
+  //     };
+  //   };
 
   async findByDeliveryId(deliveryId: string) {
     return await this.findOne({
-      where: {delivery_id: deliveryId}
-    })
+      where: { delivery_id: deliveryId },
+    });
   }
 
   async storeOutboxMessage(outbox_message: any) {

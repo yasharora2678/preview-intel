@@ -60,7 +60,10 @@ export class CreatePullRequests1774006916242 implements MigrationInterface {
       'pull_requests',
       'fk_pull_requests_repository_id',
     );
-    await queryRunner.dropUniqueConstraint('pull_requests', 'uq_pull_requests_repo_pr_number');
+    await queryRunner.dropUniqueConstraint(
+      'pull_requests',
+      'uq_pull_requests_repo_pr_number',
+    );
     await queryRunner.dropTable('pull_requests');
   }
 }
