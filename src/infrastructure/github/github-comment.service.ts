@@ -7,6 +7,7 @@ import {
 } from 'src/domain/review/review-provider.interface';
 import { PrReviewJobData } from 'src/shared/pr-review-job-data';
 import { OCTOKIT_APP } from './github-app.module';
+import { Repository } from 'src/domain/repository.entity';
 
 const RETRYABLE_STATUS_CODES = new Set([429, 500, 502, 503, 504]);
 const MAX_POST_ATTEMPTS = 3;
@@ -31,6 +32,7 @@ export class GithubCommentService {
     result: ReviewResult,
     owner: string,
     repo: string,
+    repository: Repository
   ): Promise<number> {
     const octokit = await this.getOctokit(data.installationId);
 
@@ -41,7 +43,7 @@ export class GithubCommentService {
       (issue) => issue.line === null || !issue.file,
     );
 
-    const body = this.buildReviewBody(result, generalIssues);
+    const body = this.buildReviewBody(result, generalIssues, repository);
 
     const comments = inlineIssues.map((issue) => ({
       path: issue.file,
@@ -112,10 +114,7 @@ export class GithubCommentService {
     const descriptions: Record<string, string> = {
       pending: 'AI review in progress...',
       success: `Review complete — Score: ${score}/100 ✅`,
-      failure:
-        score >= 50
-          ? `Review complete — Score: ${score}/100 ⚠️ (needs improvement)`
-          : `Review complete — Score: ${score}/100 ❌ (below threshold)`,
+      failure: `Review complete — Score: ${score}/100 ❌ (below threshold)`,
       error: 'Review failed — will retry automatically',
     };
 
@@ -144,9 +143,10 @@ export class GithubCommentService {
   private buildReviewBody(
     result: ReviewResult,
     generalIssues: ReviewIssue[] = [],
+    repository: Repository
   ): string {
     const scoreEmoji =
-      result.score >= 70 ? '✅' : result.score >= 50 ? '⚠️' : '❌';
+      result.score >= repository.score_success_threshold ? '✅' : '❌';
     const criticalCount = result.issues.filter(
       (i) => i.severity === 'critical',
     ).length;

@@ -13,6 +13,7 @@ import { GithubClientService } from 'src/infrastructure/github/github-client.ser
 import { GithubCommentService } from 'src/infrastructure/github/github-comment.service';
 import { PrReviewJobData } from 'src/shared/pr-review-job-data';
 import { CacheService } from 'src/infrastructure/cache/cache.service';
+import { GithubRepository } from 'src/infrastructure/repositories/repositories.repository';
 
 @Processor('pr-review', {
   concurrency: 5,
@@ -24,6 +25,7 @@ export class PrReviewProcessor extends WorkerHost {
     private readonly gitHubClientService: GithubClientService,
     private readonly circuitBreaker: CircuitBreakerService,
     private readonly reviewService: ReviewsService,
+    private readonly repository: GithubRepository,
     private readonly commentService: GithubCommentService,
     private readonly providerFactory: LlmProviderFactory,
     private readonly cacheService: CacheService,
@@ -38,6 +40,9 @@ export class PrReviewProcessor extends WorkerHost {
       '🔄 Processing PR review job',
     );
 
+    const repository = await this.repository.findOne({
+      where: { github_repo_id: data.githubRepoId },
+    })
     const review = await this.reviewService.createPending(data);
 
     await this.commentService.postStatusCheck(data, 'pending');
@@ -82,6 +87,7 @@ export class PrReviewProcessor extends WorkerHost {
         mergedResult,
         owner,
         repo,
+        repository
       );
 
       if (githubReviewId) {
@@ -91,7 +97,7 @@ export class PrReviewProcessor extends WorkerHost {
         );
       }
 
-      const statusState = mergedResult.score >= 70 ? 'success' : 'failure';
+      const statusState = mergedResult.score >= repository.score_success_threshold ? 'success' : 'failure';
 
       await this.commentService.postStatusCheck(
         data,
