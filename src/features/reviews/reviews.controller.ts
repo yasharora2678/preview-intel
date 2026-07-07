@@ -1,0 +1,75 @@
+import {
+  Controller,
+  Get,
+  Post,
+  Param,
+  Query,
+  ParseUUIDPipe,
+  UseGuards,
+} from '@nestjs/common';
+import { ReviewsService } from './reviews.service';
+import { PaginationDto } from 'src/infrastructure/dto/pagination.dto';
+import { User } from 'src/domain/user.entity';
+import { CurrentUser } from 'src/infrastructure/decorators/current-user.decorator';
+import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
+
+@Controller({ version: '1' })
+@UseGuards(JwtAuthGuard)
+export class ReviewsController {
+  constructor(private readonly reviewsService: ReviewsService) {}
+
+  @Get('repositories/:repoId/reviews')
+  async getRepositoryReviews(
+    @Param('repoId', ParseUUIDPipe) repoId: string,
+    @CurrentUser() user: User,
+    @Query('page') page: number,
+    @Query('limit') limit: number,
+    @Query('author') author?: string,
+    @Query('minScore') minScore?: number,
+    @Query('maxScore') maxScore?: number,
+  ) {
+    const result = await this.reviewsService.getRepositoryReviews(
+      repoId,
+      user,
+      page,
+      limit,
+      { authorLogin: author, minScore, maxScore },
+    );
+
+    return {
+      data: result.items,
+      meta: {
+        total: result.total,
+        page: result.page,
+        limit: result.limit,
+      },
+    };
+  }
+
+  @Get('reviews/:reviewId')
+  async getReviewDetail(
+    @Param('reviewId', ParseUUIDPipe) reviewId: string,
+    @CurrentUser() user: User,
+  ) {
+    const review = await this.reviewsService.getReviewDetail(reviewId, user);
+    return { data: review };
+  }
+
+  @Post('reviews/:reviewId/rereview')
+  async triggerRereview(
+    @Param('reviewId', ParseUUIDPipe) reviewId: string,
+    @CurrentUser() user: User,
+  ) {
+    const result = await this.reviewsService.triggerRereview(reviewId, user);
+    return { data: result };
+  }
+
+  @Get('pull-requests/:prId/reviews')
+  async getPullRequestReviews(
+    @Param('prId', ParseUUIDPipe) prId: string,
+    @CurrentUser() user: User,
+  ) {
+    const reviews = await this.reviewsService.getPullRequestReviews(prId, user);
+    return { data: reviews, meta: { total: reviews.length } };
+  }
+}

@@ -4,9 +4,11 @@ import {
   Entity,
   JoinColumn,
   ManyToOne,
+  OneToMany,
   PrimaryGeneratedColumn,
 } from 'typeorm';
-import { PullRequest } from './pull-request.entity';
+import { PullRequest } from '../pull-request.entity';
+import { ReviewIssue } from '../review-issue.entity';
 
 @Entity('reviews')
 export class Review {
@@ -19,6 +21,9 @@ export class Review {
   @ManyToOne(() => PullRequest)
   @JoinColumn({ name: 'pull_request_id' })
   pullRequest: PullRequest;
+
+  @OneToMany(() => ReviewIssue, (issue) => issue.review)
+  issues: ReviewIssue[];
 
   @Column()
   head_commit_sha: string;
@@ -48,7 +53,10 @@ export class Review {
   github_review_id: number;
 
   @Column({ type: 'timestamptz', nullable: true })
-  completed_at: Date;
+  processing_started_at: Date;
+
+  @Column({ type: 'timestamptz', nullable: true })
+  processing_completed_at: Date;
 
   @CreateDateColumn({ type: 'timestamptz' })
   created_at: Date;

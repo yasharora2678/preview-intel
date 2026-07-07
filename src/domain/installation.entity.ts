@@ -6,6 +6,7 @@ import {
   OneToMany,
   CreateDateColumn,
   JoinColumn,
+  UpdateDateColumn,
 } from 'typeorm';
 import { User } from './user.entity';
 import { Repository } from './repository.entity';
@@ -24,12 +25,15 @@ export class Installation {
   @Column()
   github_account_type: string;
 
-  @ManyToOne(() => User, (user) => user.installations)
+  @ManyToOne(() => User, (user) => user.installations, { nullable: true })
   @JoinColumn({ name: 'user_id' })
   user: User;
 
-  @Column()
+  @Column({ nullable: true })
   user_id: string;
+
+  @Column({ type: 'bigint', nullable: true })
+  sender_github_id: number | null;
 
   @Column({ nullable: true })
   llm_provider: string;
@@ -42,6 +46,9 @@ export class Installation {
 
   @CreateDateColumn({ type: 'timestamptz' })
   created_at: Date;
+
+  @UpdateDateColumn({ type: 'timestamptz' }) // ADD — auto-updates on every save()
+  updated_at: Date;
 
   @OneToMany(() => Repository, (repo) => repo.installation)
   repositories: Repository[];

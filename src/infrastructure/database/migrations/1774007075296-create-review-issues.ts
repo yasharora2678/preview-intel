@@ -3,6 +3,7 @@ import {
   QueryRunner,
   Table,
   TableForeignKey,
+  TableIndex,
 } from 'typeorm';
 
 export class CreateReviewIssues1774007075296 implements MigrationInterface {
@@ -31,6 +32,14 @@ export class CreateReviewIssues1774007075296 implements MigrationInterface {
       }),
     );
 
+    await queryRunner.createIndex(
+      'review_issues',
+      new TableIndex({
+        name: 'idx_review_issues_review_id_severity',
+        columnNames: ['review_id', 'severity'],
+      }),
+    );
+
     await queryRunner.createForeignKey(
       'review_issues',
       new TableForeignKey({
@@ -44,6 +53,10 @@ export class CreateReviewIssues1774007075296 implements MigrationInterface {
   }
 
   public async down(queryRunner: QueryRunner): Promise<void> {
+    await queryRunner.dropIndex(
+      'review_issues',
+      'idx_review_issues_review_id_severity',
+    );
     await queryRunner.dropForeignKey(
       'review_issues',
       'fk_review_issues_review_id',

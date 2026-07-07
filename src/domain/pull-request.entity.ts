@@ -6,8 +6,10 @@ import {
   OneToMany,
   CreateDateColumn,
   JoinColumn,
+  UpdateDateColumn,
 } from 'typeorm';
 import { Repository } from './repository.entity';
+import { Review } from './review/review.entity';
 
 @Entity('pull_requests')
 export class PullRequest {
@@ -36,12 +38,21 @@ export class PullRequest {
   @Column()
   base_branch: string;
 
+  @Column()
+  head_branch: string;
+
   @Column({ type: 'text' })
   github_pr_url: string;
 
   @Column()
   state: string;
 
+  @OneToMany(() => Review, (review) => review.pullRequest)
+  reviews: Review[];
+
   @CreateDateColumn({ type: 'timestamptz' })
   created_at: Date;
+
+  @UpdateDateColumn({ type: 'timestamptz' })
+  updated_at: Date;
 }

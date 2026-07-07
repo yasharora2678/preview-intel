@@ -27,8 +27,14 @@ export class CreateRepositories1774006725787 implements MigrationInterface {
           { name: 'is_enabled', type: 'boolean', default: true },
           { name: 'skip_drafts', type: 'boolean', default: true },
           { name: 'skip_bots', type: 'boolean', default: true },
-          { name: 'score_fail_threshold', type: 'int', default: 50 },
-          { name: 'score_pass_threshold', type: 'int', default: 80 },
+          {
+            name: 'skip_file_patterns',
+            type: 'text',
+            isArray: true,
+            default: "'{}'",
+          },
+          { name: 'score_failure_threshold', type: 'int', default: 50 },
+          { name: 'score_success_threshold', type: 'int', default: 80 },
           { name: 'created_at', type: 'timestamptz', default: 'now()' },
         ],
       }),
@@ -59,7 +65,10 @@ export class CreateRepositories1774006725787 implements MigrationInterface {
       'repositories',
       'fk_repositories_installation_id',
     );
-    await queryRunner.dropIndex('repositories', 'idx_repositories_github_repo_id');
+    await queryRunner.dropIndex(
+      'repositories',
+      'idx_repositories_github_repo_id',
+    );
     await queryRunner.dropTable('repositories');
   }
 }

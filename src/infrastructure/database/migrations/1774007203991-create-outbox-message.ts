@@ -3,6 +3,10 @@ import { MigrationInterface, QueryRunner, Table, TableIndex } from 'typeorm';
 export class CreateOutboxMessage1774007203991 implements MigrationInterface {
   name = 'CreateOutboxMessage1774007203991';
   public async up(queryRunner: QueryRunner): Promise<void> {
+    await queryRunner.query(`
+      CREATE TYPE "public"."outbox_message_status_enum" AS ENUM('published', 'pending', 'failed');
+    `);
+
     await queryRunner.createTable(
       new Table({
         name: 'outbox_message',
@@ -19,13 +23,20 @@ export class CreateOutboxMessage1774007203991 implements MigrationInterface {
             isNullable: false,
           },
           {
+            name: 'delivery_id',
+            type: 'varchar',
+            isUnique: true,
+            isNullable: false,
+          },
+          {
             name: 'payload',
             type: 'jsonb',
             isNullable: false,
           },
           {
             name: 'status',
-            type: 'varchar',
+            type: '"public"."outbox_message_status_enum"',
+            default: `'pending'`,
             isNullable: false,
           },
           {

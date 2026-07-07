@@ -1,0 +1,276 @@
+import {
+  Injectable,
+  NotFoundException,
+  ForbiddenException,
+  Logger,
+} from '@nestjs/common';
+import { QueryBus } from '@nestjs/cqrs';
+import { ReviewStatus } from 'src/domain/review/review-status.enum';
+import { User } from 'src/domain/user.entity';
+import { Review } from 'src/domain/review/review.entity';
+import { GetRepositoryReviewsQuery } from 'src/infrastructure/cqrs/queries/get-repository-reviews.query';
+import { GetReviewDetailQuery } from 'src/infrastructure/cqrs/queries/get-review-detail.query';
+import { PaginationDto } from 'src/infrastructure/dto/pagination.dto';
+import { PullRequestRepository } from 'src/infrastructure/repositories/pull-request.repository';
+import { GithubRepository } from 'src/infrastructure/repositories/repositories.repository';
+import { ReviewsRepository } from 'src/infrastructure/repositories/review-repository';
+import { PrReviewJobData } from 'src/shared/pr-review-job-data';
+import { ReviewResult } from '../../domain/review/review-provider.interface';
+import { ReviewIssueRepository } from 'src/infrastructure/repositories/review-issue.repository';
+import { InjectQueue } from '@nestjs/bullmq';
+import { Queue } from 'bullmq';
+import * as crypto from 'crypto';
+
+@Injectable()
+export class ReviewsService {
+  private readonly logger = new Logger(ReviewsService.name);
+
+  constructor(
+    private readonly queryBus: QueryBus,
+    private readonly reviewsRepository: ReviewsRepository,
+    private readonly pullRequestRepository: PullRequestRepository,
+    private readonly githubRepository: GithubRepository,
+    private readonly reviewIssueRepository: ReviewIssueRepository,
+    @InjectQueue('pr-review') private readonly queue: Queue,
+  ) {}
+
+  async getRepositoryReviews(
+    repoId: string,
+    user: User,
+    page: number,
+    limit: number,
+    filters?: any,
+  ) {
+    await this.verifyRepoAccess(repoId, user);
+
+    return this.queryBus.execute(
+      new GetRepositoryReviewsQuery(repoId, user.id, page, limit, filters),
+    );
+  }
+
+  async getReviewDetail(reviewId: string, user: User) {
+    const review = await this.queryBus.execute(
+      new GetReviewDetailQuery(reviewId, user.id),
+    );
+
+    await this.verifyRepoAccess(review.pullRequest.repository.id, user);
+
+    return review;
+  }
+
+  async triggerRereview(
+    reviewId: string,
+    user: User,
+  ): Promise<{ jobId: string }> {
+    const review = await this.reviewsRepository.findOne({
+      where: { id: reviewId },
+      relations: [
+        'pullRequest',
+        'pullRequest.repository',
+        'pullRequest.repository.installation',
+      ],
+    });
+
+    if (!review) throw new NotFoundException('Review not found');
+
+    const repo = review.pullRequest.repository;
+    await this.verifyRepoAccess(repo.id, user);
+
+    const pr = review.pullRequest;
+
+    const jobId = crypto
+      .createHash('md5')
+      .update(
+        `${repo.github_repo_id}:${pr.github_pr_number}:${pr.head_commit_sha}:rereview`,
+      )
+      .digest('hex');
+
+    await this.queue.add(
+      'review-pr',
+      {
+        installationId: repo.installation.github_installation_id,
+        repositoryId: repo.id,
+        githubRepoId: repo.github_repo_id,
+        repoFullName: repo.full_name,
+        prNumber: pr.github_pr_number,
+        prTitle: pr.title,
+        headCommitSha: pr.head_commit_sha,
+        baseBranch: pr.base_branch,
+        headBranch: pr.head_branch,
+        authorLogin: pr.author_login,
+        githubPrUrl: pr.github_pr_url,
+        action: 'reopened',
+        outboxEventId: `rereview-${reviewId}`,
+      },
+      { jobId, priority: 5 },
+    );
+
+    this.logger.log(
+      {
+        reviewId,
+        jobId,
+        prNumber: pr.github_pr_number,
+        triggeredBy: user.github_username,
+      },
+      'Re-review enqueued',
+    );
+
+    return { jobId };
+  }
+
+  async getPullRequestReviews(prId: string, user: User) {
+    const pr = await this.pullRequestRepository.findOne({
+      where: { id: prId },
+      relations: ['repository'],
+    });
+
+    if (!pr) throw new NotFoundException('Pull request not found');
+    await this.verifyRepoAccess(pr.repository_id, user);
+
+    return this.reviewsRepository.find({
+      where: { pull_request_id: prId },
+      relations: ['issues'],
+      order: { created_at: 'DESC' },
+    });
+  }
+
+  private async verifyRepoAccess(repoId: string, user: User): Promise<void> {
+    if (user.is_admin) return;
+
+    const repo = await this.githubRepository.findOne({
+      where: { id: repoId },
+      relations: ['installation'],
+    });
+
+    if (!repo) throw new NotFoundException('Repository not found');
+
+    if (repo.installation.user_id !== user.id) {
+      throw new ForbiddenException('You do not have access to this repository');
+    }
+  }
+
+  async createPending(data: PrReviewJobData): Promise<Review> {
+    const repo = await this.githubRepository.findOne({
+      where: { github_repo_id: data.githubRepoId },
+    });
+
+    if (!repo) {
+      throw new Error(
+        `Repository not found for githubRepoId: ${data.githubRepoId}`,
+      );
+    }
+
+    let pr = await this.pullRequestRepository.findOne({
+      where: {
+        repository_id: repo.id,
+        github_pr_number: data.prNumber,
+      },
+    });
+
+    if (!pr) {
+      pr = await this.pullRequestRepository.save({
+        repository_id: repo.id,
+        github_pr_number: data.prNumber,
+        title: data.prTitle,
+        author_login: data.authorLogin,
+        head_commit_sha: data.headCommitSha,
+        base_branch: data.baseBranch,
+        head_branch: data.headBranch,
+        state: 'open',
+        github_pr_url: data.githubPrUrl,
+      });
+    } else {
+      await this.pullRequestRepository.update(pr.id, {
+        head_commit_sha: data.headCommitSha,
+        title: data.prTitle,
+      });
+    }
+
+    const review = await this.reviewsRepository.save({
+      pull_request_id: pr.id,
+      head_commit_sha: data.headCommitSha,
+      status: ReviewStatus.PROCESSING,
+      processing_started_at: new Date(),
+    });
+
+    return review;
+  }
+
+  async saveCompleted(
+    reviewId: string,
+    result: ReviewResult,
+    provider: string,
+    model: string,
+    githubReviewId?: number,
+  ): Promise<void> {
+    await this.reviewsRepository.update(
+      { id: reviewId },
+      {
+        status: ReviewStatus.COMPLETED,
+        score: result.score,
+        summary: result.summary,
+        missing_tests: result.missing_tests,
+        breaking_change: result.breaking_change,
+        llm_provider: provider,
+        llm_model: model,
+        github_review_id: githubReviewId ?? null,
+        processing_completed_at: new Date(),
+      },
+    );
+
+    if (result.issues.length > 0) {
+      const issues = result.issues.map((issue) =>
+        this.reviewIssueRepository.create({
+          review_id: reviewId,
+          type: issue.type,
+          severity: issue.severity,
+          file_path: issue.file,
+          line_number: issue.line ?? null,
+          description: issue.description,
+          suggestion: issue.suggestion,
+        }),
+      );
+
+      await this.reviewIssueRepository.save(issues);
+    }
+  }
+
+  async markFailed(reviewId: string, errorMessage: string): Promise<void> {
+    await this.reviewsRepository.update(
+      { id: reviewId },
+      {
+        status: ReviewStatus.FAILED,
+        processing_completed_at: new Date(),
+      },
+    );
+  }
+
+  async markNoContent(reviewId: string): Promise<void> {
+    await this.reviewsRepository.update(
+      { id: reviewId },
+      {
+        status: ReviewStatus.NO_CONTENT,
+        score: 100,
+        summary: 'No reviewable files found in this PR.',
+        processing_completed_at: new Date(),
+      },
+    );
+  }
+
+  async findDetailById(reviewId: string): Promise<Review | null> {
+    return this.reviewsRepository.findOne({
+      where: { id: reviewId },
+      relations: ['issues', 'pullRequest'],
+    });
+  }
+
+  async updateGithubReviewId(
+    reviewId: string,
+    githubReviewId: number,
+  ): Promise<void> {
+    await this.reviewsRepository.update(
+      { id: reviewId },
+      { github_review_id: githubReviewId },
+    );
+  }
+}

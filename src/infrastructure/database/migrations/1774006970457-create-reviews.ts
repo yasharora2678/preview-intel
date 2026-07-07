@@ -30,7 +30,16 @@ export class CreateReviews1774006970457 implements MigrationInterface {
           { name: 'missing_tests', type: 'boolean', default: false },
           { name: 'breaking_change', type: 'boolean', default: false },
           { name: 'github_review_id', type: 'bigint', isNullable: true },
-          { name: 'completed_at', type: 'timestamptz', isNullable: true },
+          {
+            name: 'processing_started_at',
+            type: 'timestamptz',
+            isNullable: true,
+          },
+          {
+            name: 'processing_completed_at',
+            type: 'timestamptz',
+            isNullable: true,
+          },
           { name: 'created_at', type: 'timestamptz', default: 'now()' },
         ],
       }),
@@ -41,6 +50,14 @@ export class CreateReviews1774006970457 implements MigrationInterface {
       new TableIndex({
         name: 'idx_reviews_pull_request_id',
         columnNames: ['pull_request_id'],
+      }),
+    );
+
+    await queryRunner.createIndex(
+      'reviews',
+      new TableIndex({
+        name: 'idx_reviews_created_at_desc',
+        columnNames: ['created_at'],
       }),
     );
 
@@ -58,6 +75,7 @@ export class CreateReviews1774006970457 implements MigrationInterface {
 
   public async down(queryRunner: QueryRunner): Promise<void> {
     await queryRunner.dropIndex('reviews', 'idx_reviews_pull_request_id');
+    await queryRunner.dropIndex('reviews', 'idx_reviews_created_at_desc');
     await queryRunner.dropForeignKey('reviews', 'fk_reviews_pull_request_id');
     await queryRunner.dropTable('reviews');
   }
